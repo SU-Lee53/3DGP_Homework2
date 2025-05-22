@@ -38,6 +38,7 @@ using tstring = std::basic_string<_TCHAR>;
 // D3D12
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <dxgidebug.h>
 
 
 // D3DCompiler
@@ -84,6 +85,16 @@ constexpr static UINT8 DIR_UP = DIR_RIGHT << 1;
 constexpr static UINT8 DIR_DOWN = DIR_UP << 1;
 
 constexpr static UINT8 EXPLOSION_DEBRISES = 240;
+
+// Utility functions
+extern ID3D12Resource* CreateBufferResources(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList,
+	void* pData, UINT nBytes, D3D12_HEAP_TYPE d3dHeapType = D3D12_HEAP_TYPE_UPLOAD,
+	D3D12_RESOURCE_STATES d3dResourceStates = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, ID3D12Resource** ppd3dUploadBuffer = nullptr);
+
+extern void ShowErrorMessage(std::string_view file, int line, std::string_view message);
+
+#define SHOW_ERROR(strMsg)		ShowErrorMessage(__FILE__, __LINE__, strMsg);
+
 
 inline bool IsZero(float fValue) { return fabsf(fValue) < std::numeric_limits<float>::epsilon(); }
 inline bool IsEqual(float fA, float fB) { return (::IsZero(fA - fB)); }

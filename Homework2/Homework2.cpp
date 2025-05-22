@@ -18,7 +18,7 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
-GameFramework g_GameFramework;
+std::shared_ptr<GameFramework> g_pGameFramework;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
@@ -58,10 +58,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
         else {
             // Framework Update
-            g_GameFramework.Update();
-            g_GameFramework.Draw();
+            g_pGameFramework->Update();
+            g_pGameFramework->Render();
+            g_pGameFramework->MoveToNextFrame();
         }
     }
+
+    g_pGameFramework->OnDestroy();
 
     return (int)msg.wParam;
 }
@@ -120,8 +123,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     }
 
     // Framework Initialize
-    g_GameFramework.OnCreate(hInstance, hMainWnd);
 
+    g_pGameFramework = std::make_shared<GameFramework>();
+
+#ifdef _DEBUG
+    g_pGameFramework->OnCreate(hInstance, hMainWnd, true);
+#else
+    g_pGameFramework->OnCreate(hInstance, hMainWnd, false);
+#endif
 
     ShowWindow(hMainWnd, nCmdShow);
     UpdateWindow(hMainWnd);
