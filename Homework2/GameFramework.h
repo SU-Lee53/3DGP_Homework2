@@ -1,7 +1,9 @@
 #pragma once
 #include "GameTimer.h"
+#include "Scene.h"
 
-class Scene;
+class Player;
+class GameObject;
 
 class GameFramework {
 public:
@@ -19,6 +21,10 @@ public:
 public:
 	void BuildObjects();
 	void ReleaseObjects();
+
+public:
+	static BOOL ChangeScene(TAG_SCENE_NAME eTargetSceneTag);
+	static BOOL ResetScene();
 
 private:
 	void CreateD3DDevice(bool bEnableDebugLayer);
@@ -109,6 +115,8 @@ private:
 private:
 	// Manages Scenes
 	static std::shared_ptr<Scene> m_pCurrentScene;
+	static std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> m_pScenes;
+	static TAG_SCENE_NAME m_eCurrentSceneTag;
 
 
 

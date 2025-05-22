@@ -73,6 +73,16 @@ void GameFramework::ReleaseObjects()
 {
 }
 
+BOOL GameFramework::ChangeScene(TAG_SCENE_NAME eTargetSceneTag)
+{
+	return 0;
+}
+
+BOOL GameFramework::ResetScene()
+{
+	return 0;
+}
+
 void GameFramework::CreateD3DDevice(bool bEnableDebugLayer)
 {
 	HRESULT hr;

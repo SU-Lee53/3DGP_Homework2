@@ -131,22 +131,48 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BulletObject.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Defines.h" />
+    <ClInclude Include="ExplosiveObject.h" />
+    <ClInclude Include="FirstPersonCamera.h" />
+    <ClInclude Include="FirstPersonPlayer.h" />
     <ClInclude Include="GameFramework.h" />
+    <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Level1Scene.h" />
+    <ClInclude Include="Level2Scene.h" />
+    <ClInclude Include="MenuScene.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshHelper.h" />
+    <ClInclude Include="ObstacleObject.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="RandomGenerator.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="ShieldObject.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Homework2.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="TankObject.h" />
+    <ClInclude Include="TankPlayer.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ThirdPersonCamera.h" />
+    <ClInclude Include="TitleScene.h" />
+    <ClInclude Include="Transform.h" />
+    <ClInclude Include="WallsObject.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BulletObject.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ExplosiveObject.cpp" />
+    <ClCompile Include="FirstPersonCamera.cpp" />
+    <ClCompile Include="FirstPersonPlayer.cpp" />
     <ClCompile Include="GameFramework.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameTimer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -156,14 +182,28 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Level1Scene.cpp" />
+    <ClCompile Include="Level2Scene.cpp" />
+    <ClCompile Include="MenuScene.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshHelper.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="ObstacleObject.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="ShieldObject.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="TankObject.cpp" />
+    <ClCompile Include="TankPlayer.cpp" />
+    <ClCompile Include="ThirdPersonCamera.cpp" />
+    <ClCompile Include="TitleScene.cpp" />
+    <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="WallsObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Homework2.rc" />
