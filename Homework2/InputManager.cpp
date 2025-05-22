@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "InputManager.h"
 
-void InputManager::Initialize(HWND hWnd)
+void InputManager::OnCreate(HWND hWnd)
 {
 	m_hWnd = hWnd;
 	std::fill(m_eKeyStates.begin(), m_eKeyStates.end(), KEY_STATE::NONE);

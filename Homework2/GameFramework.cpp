@@ -1,5 +1,15 @@
 #include "stdafx.h"
 #include "GameFramework.h"
+#include "TitleScene.h"
+#include "MenuScene.h"
+#include "Level1Scene.h"
+#include "Level2Scene.h"
+
+using namespace std;
+
+std::shared_ptr<Scene> GameFramework::m_pCurrentScene = nullptr;
+std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> GameFramework::m_pScenes = {};
+TAG_SCENE_NAME GameFramework::m_eCurrentSceneTag = TAG_SCENE_UNDEFINED;
 
 GameFramework::GameFramework()
 {
@@ -19,7 +29,7 @@ void GameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd, bool bEnableDeb
 	CreateSwapChain();
 	CreateDepthStencilView();
 
-	INPUT.Initialize(m_hWnd);
+	INPUT.OnCreate(m_hWnd);
 
 	_tcscpy_s(m_pszFrameRate, _T("LabProject ("));
 }
@@ -67,6 +77,18 @@ void GameFramework::MoveToNextFrame()
 
 void GameFramework::BuildObjects()
 {
+	// Build Scenes
+	{
+		m_pScenes[TAG_SCENE_TITLE] = make_shared<TitleScene>();
+		m_pScenes[TAG_SCENE_MENU] = make_shared<MenuScene>();
+		m_pScenes[TAG_SCENE_LEVEL1] = make_shared<Level1Scene>();
+		m_pScenes[TAG_SCENE_LEVEL2] = make_shared<Level2Scene>();
+
+		m_eCurrentSceneTag = TAG_SCENE_TITLE;
+		m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
+		m_pCurrentScene->BuildObjects();
+	}
+
 }
 
 void GameFramework::ReleaseObjects()
@@ -75,12 +97,29 @@ void GameFramework::ReleaseObjects()
 
 BOOL GameFramework::ChangeScene(TAG_SCENE_NAME eTargetSceneTag)
 {
-	return 0;
+	if (!INPUT.IsCursorShown()) {
+		INPUT.ShowCursor();
+	}
+
+	m_pCurrentScene->ReleaseObjects();
+	m_pCurrentScene.reset();
+
+	m_eCurrentSceneTag = eTargetSceneTag;
+	m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
+	m_pCurrentScene->BuildObjects();
+
+	return TRUE;
 }
 
 BOOL GameFramework::ResetScene()
 {
-	return 0;
+	m_pCurrentScene->ReleaseObjects();
+	m_pCurrentScene.reset();
+
+	m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
+	m_pCurrentScene->BuildObjects();
+
+	return TRUE;
 }
 
 void GameFramework::CreateD3DDevice(bool bEnableDebugLayer)

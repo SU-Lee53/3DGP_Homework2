@@ -122,7 +122,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         return FALSE;
     }
 
-    // Framework Initialize
+    // Framework OnCreate
 
     g_pGameFramework = std::make_shared<GameFramework>();
 

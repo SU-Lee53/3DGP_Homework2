@@ -1,66 +1,57 @@
 #pragma once
+#include "VertexType.h"
 
-struct Vertex {
-	Vertex() = default;
-	Vertex(float x, float y, float z) { m_xmf3Position = XMFLOAT3{ x,y,z }; }
-	Vertex(const XMFLOAT3& xmf3Position) { m_xmf3Position = xmf3Position; }
 
-	operator XMFLOAT3(){
-		return m_xmf3Position;
-	}
-
-	XMFLOAT3 m_xmf3Position{ 0.f, 0.f, 0.f };
-};
-
-struct Polygon {
-	Polygon() = default;
-	Polygon(int nVertices) : m_Vertices{ std::vector<Vertex>(nVertices) } {}
-
-	void SetVertex(int nIndex, Vertex& vertex) {
-		if ((0 <= nIndex) && (nIndex < m_Vertices.size()) && !m_Vertices.empty()) {
-			m_Vertices[nIndex] = vertex;
-		}
-	}
-
-	std::vector<Vertex> m_Vertices = {};
-};
-
+template<typename T>
 class Mesh {
 public:
 	Mesh() = default;
-	Mesh(int nPolygons) : m_pPolygons{ std::vector<std::shared_ptr<struct Polygon>>(nPolygons) } {};
 
 public:
-	void SetPolygon(int nIndex, std::shared_ptr<struct Polygon> pPolygon) {
-		if ((0 <= nIndex) && (nIndex < m_pPolygons.size())) {
-			m_pPolygons[nIndex] = pPolygon;
-		}
-	}
-
-	void AddPolygon(std::shared_ptr<struct Polygon> pPolygon) {
-		m_pPolygons.push_back(pPolygon);
-	}
-
-	virtual void Render(HDC hDCFrameBuffer);
+	void Create(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, UINT nInstances = 1);
 
 	BOOL RayIntersectionByTriangle(const XMVECTOR& xmvRayOrigin, const XMVECTOR& xmvRayDirection,
 		const XMVECTOR& v0, const XMVECTOR v1, const XMVECTOR v2, float& fNearHitDistance);
 
 	int CheckRayIntersection(const XMVECTOR& xmvPickRayOrigin, const XMVECTOR& xmvPickRayDirection, float& fNearHitDistance);
 
-	BoundingOrientedBox& GetOBB() { return m_xmOBB; }
+	void ReleaseUploadBuffers();
 
 protected:
-	std::vector<std::shared_ptr<struct Polygon>>	m_pPolygons = {};
+	std::vector<T>			m_xmf3Vertices = {};
+	ComPtr<ID3D12Resource>	m_pd3dVertexBuffer = nullptr;
+	ComPtr<ID3D12Resource>	m_pd3dVertexUploadBuffer = nullptr;
+
+	std::vector<UINT>		m_xmf3Indices = {};
+	ComPtr<ID3D12Resource>	m_pd3dIndexBuffer = nullptr;
+	ComPtr<ID3D12Resource>	m_pd3dIndexUploadBuffer = nullptr;
+
+	D3D12_VERTEX_BUFFER_VIEW	m_d3dVertexBufferView = {};
+	D3D12_INDEX_BUFFER_VIEW		m_d3dIndexBufferView = {};
+
+	D3D12_PRIMITIVE_TOPOLOGY	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	UINT m_nSlot = 0;
+	UINT m_nStride = 0;
+	UINT m_nOffset = 0;
+
+	UINT m_nStartIndex = 0;
+	UINT m_nBaseVertex = 0;
 
 	BoundingOrientedBox						m_xmOBB = {};
 
+
+#pragma region Friend_MeshHelper
 	friend void MeshHelper::CreateCubeMesh(std::shared_ptr<Mesh> pMesh, float fWidth, float fHeight, float fDepth);
 	friend void MeshHelper::CreateWallMesh(std::shared_ptr<Mesh> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects);
 	friend void MeshHelper::CreateAirplaneMesh(std::shared_ptr<Mesh> pMesh, float fWidth, float fHeight, float fDepth);
 	friend BOOL MeshHelper::CreateMeshFromOBJFiles(std::shared_ptr<Mesh> pMesh, std::wstring_view wstrObjPath);
 	friend void MeshHelper::CreateRollercoasterRailMesh(std::shared_ptr<Mesh> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute,
 		float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias);
+
+#pragma endregion
 };
 
 // ==========

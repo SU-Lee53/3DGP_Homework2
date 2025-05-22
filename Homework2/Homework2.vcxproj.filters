@@ -61,6 +61,12 @@
     <Filter Include="헤더 파일\Etc">
       <UniqueIdentifier>{3998a709-52aa-4dfe-9d87-ac15d8174af9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Shader">
+      <UniqueIdentifier>{31308d5b-ac4a-4738-8040-03a90a4db01e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Shader\HLSL">
+      <UniqueIdentifier>{3bdec173-a138-4ecc-a463-fdf97f24081c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -153,6 +159,15 @@
     <ClInclude Include="targetver.h">
       <Filter>헤더 파일\Etc</Filter>
     </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>소스 파일\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderManager.h">
+      <Filter>소스 파일\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexType.h">
+      <Filter>소스 파일\Mesh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -233,6 +248,15 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>소스 파일\pch</Filter>
     </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>소스 파일\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderManager.cpp">
+      <Filter>소스 파일\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexType.cpp">
+      <Filter>소스 파일\Mesh</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Homework2.rc">
@@ -246,5 +270,10 @@
     <Image Include="Homework2.ico">
       <Filter>리소스 파일</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="BasicShader.hlsl">
+      <Filter>소스 파일\Shader\HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

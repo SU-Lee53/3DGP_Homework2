@@ -16,7 +16,7 @@ class InputManager
 	DECLARE_SINGLE(InputManager)
 
 public:
-	void Initialize(HWND hWnd);
+	void OnCreate(HWND hWnd);
 	void Update();
 
 public:

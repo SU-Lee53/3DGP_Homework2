@@ -15,3 +15,4 @@ public:										\
 #define GET_SINGLE(classname)	classname::GetInstance()
 
 #define INPUT			GET_SINGLE(InputManager)
+#define RENDER			GET_SINGLE(RenderManager)

@@ -149,7 +149,9 @@
     <ClInclude Include="ObstacleObject.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="RandomGenerator.h" />
+    <ClInclude Include="RenderManager.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="ShieldObject.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Homework2.h" />
@@ -160,6 +162,7 @@
     <ClInclude Include="ThirdPersonCamera.h" />
     <ClInclude Include="TitleScene.h" />
     <ClInclude Include="Transform.h" />
+    <ClInclude Include="VertexType.h" />
     <ClInclude Include="WallsObject.h" />
   </ItemGroup>
   <ItemGroup>
@@ -192,7 +195,9 @@
     </ClCompile>
     <ClCompile Include="ObstacleObject.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShieldObject.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -203,6 +208,7 @@
     <ClCompile Include="ThirdPersonCamera.cpp" />
     <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="VertexType.cpp" />
     <ClCompile Include="WallsObject.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -211,6 +217,9 @@
   <ItemGroup>
     <Image Include="Homework2.ico" />
     <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="BasicShader.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
