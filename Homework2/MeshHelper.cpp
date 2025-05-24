@@ -5,7 +5,8 @@
 
 using namespace std;
 
-void MeshHelper::CreateCubeMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, const XMFLOAT4& xmf4Color)
+void MeshHelper::CreateCubeMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
+	shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, const XMFLOAT4& xmf4Color)
 {
 	pMesh->m_xmf3Vertices.resize(8);
 	pMesh->m_nStride = sizeof(DiffusedVertex);
@@ -80,7 +81,8 @@ void MeshHelper::CreateCubeMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, float fW
 	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fx, fy, fz), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
-void MeshHelper::CreateWallMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects, const XMFLOAT4& xmf4Color)
+void MeshHelper::CreateWallMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
+	shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects, const XMFLOAT4& xmf4Color)
 {
 	pMesh->m_xmf3Vertices.reserve((6 * nSubRects * nSubRects));
 
@@ -173,10 +175,35 @@ void MeshHelper::CreateWallMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, float fW
 		}
 	}
 
+
+	pMesh->m_pd3dVertexBuffer = ::CreateBufferResources(pd3dDevice, pd3dCommandList, pMesh->m_xmf3Vertices.data(),
+		pMesh->m_nStride * pMesh->m_xmf3Vertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &pMesh->m_pd3dVertexUploadBuffer);
+
+	pMesh->m_d3dVertexBufferView.BufferLocation = pMesh->m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dVertexBufferView.StrideInBytes = pMesh->m_nStride;
+	pMesh->m_d3dVertexBufferView.SizeInBytes = pMesh->m_nStride * pMesh->m_xmf3Vertices.size();
+
+	pMesh->m_pd3dIndexBuffer = ::CreateBufferResources(
+		pd3dDevice,
+		pd3dCommandList,
+		pMesh->m_uiIndices.data(),
+		sizeof(UINT) * (pMesh->m_uiIndices.size() * 3),
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER,
+		&pMesh->m_pd3dIndexUploadBuffer
+	);
+
+	pMesh->m_d3dIndexBufferView.BufferLocation = pMesh->m_pd3dIndexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	pMesh->m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * (pMesh->m_uiIndices.size() * 3);
+
+
+
 	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fHalfWidth, fHalfHeight, fHalfDepth), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
-BOOL MeshHelper::CreateMeshFromOBJFiles(shared_ptr<Mesh<DiffusedVertex>> pMesh, wstring_view wstrObjPath, const XMFLOAT4& xmf4Color)
+BOOL MeshHelper::CreateMeshFromOBJFiles(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
+	shared_ptr<Mesh<DiffusedVertex>> pMesh, wstring_view wstrObjPath, const XMFLOAT4& xmf4Color)
 {
 	ifstream in{ wstrObjPath.data() };
 
@@ -227,12 +254,35 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(shared_ptr<Mesh<DiffusedVertex>> pMesh, 
 
 	std::copy(LoadedIndices.begin(), LoadedIndices.end(), std::back_inserter(pMesh->m_uiIndices));
 
+
+	pMesh->m_pd3dVertexBuffer = ::CreateBufferResources(pd3dDevice, pd3dCommandList, pMesh->m_xmf3Vertices.data(),
+		pMesh->m_nStride * pMesh->m_xmf3Vertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &pMesh->m_pd3dVertexUploadBuffer);
+
+	pMesh->m_d3dVertexBufferView.BufferLocation = pMesh->m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dVertexBufferView.StrideInBytes = pMesh->m_nStride;
+	pMesh->m_d3dVertexBufferView.SizeInBytes = pMesh->m_nStride * pMesh->m_xmf3Vertices.size();
+
+	pMesh->m_pd3dIndexBuffer = ::CreateBufferResources(
+		pd3dDevice,
+		pd3dCommandList,
+		pMesh->m_uiIndices.data(),
+		sizeof(UINT) * (pMesh->m_uiIndices.size() * 3),
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER,
+		&pMesh->m_pd3dIndexUploadBuffer
+	);
+
+	pMesh->m_d3dIndexBufferView.BufferLocation = pMesh->m_pd3dIndexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	pMesh->m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * (pMesh->m_uiIndices.size() * 3);
+
 	XMFLOAT3 xmf3ObbExtent = Vector3::Subtract(XMFLOAT3{ itNewMaxX->x, itNewMaxY->y, itNewMaxZ->z }, xmf3NewCenter);
 	pMesh->m_xmOBB = BoundingOrientedBox(xmf3NewCenter, xmf3ObbExtent, XMFLOAT4{ 0.f, 0.f, 0.f, 1.f });
 
 }
 
-void GenerateRollercoasterPillarPolygon(shared_ptr<Mesh<DiffusedVertex>> pMesh, XMFLOAT3 xmf3TopPosition, float fWidth, float fDepth, const XMFLOAT4& xmf4Color)
+void GenerateRollercoasterPillarPolygon(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
+	shared_ptr<Mesh<DiffusedVertex>> pMesh, XMFLOAT3 xmf3TopPosition, float fWidth, float fDepth, const XMFLOAT4& xmf4Color)
 {
 	XMFLOAT3 xmf3PillarCenter;
 	XMStoreFloat3(&xmf3PillarCenter, XMVectorMultiply(XMLoadFloat3(&xmf3TopPosition), XMVectorSet(1.0f, 0.5f, 1.0f, 0.0f)));
@@ -241,51 +291,65 @@ void GenerateRollercoasterPillarPolygon(shared_ptr<Mesh<DiffusedVertex>> pMesh, 
 	float fHalfHeight = xmf3PillarCenter.y;
 	float fHalfDepth = fDepth * 0.5f;
 
-	shared_ptr<struct Polygon> pFrontFace = make_shared<struct Polygon>(4);
-	pFrontFace->SetVertex(0, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pFrontFace->SetVertex(1, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pFrontFace->SetVertex(2, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pFrontFace->SetVertex(3, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pMesh->AddPolygon(pFrontFace);
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
 
-	shared_ptr<struct Polygon> pTopFace = make_shared<struct Polygon>(4);
-	pTopFace->SetVertex(0, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pTopFace->SetVertex(1, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pTopFace->SetVertex(2, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pTopFace->SetVertex(3, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pMesh->AddPolygon(pTopFace);
+	UINT uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
 
-	shared_ptr<struct Polygon> pBackFace = make_shared<struct Polygon>(4);
-	pBackFace->SetVertex(0, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pBackFace->SetVertex(1, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pBackFace->SetVertex(2, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pBackFace->SetVertex(3, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pMesh->AddPolygon(pBackFace);
 
-	shared_ptr<struct Polygon> pBottomFace = make_shared<struct Polygon>(4);
-	pBottomFace->SetVertex(0, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pBottomFace->SetVertex(1, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pBottomFace->SetVertex(2, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pBottomFace->SetVertex(3, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pMesh->AddPolygon(pBottomFace);
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
 
-	shared_ptr<struct Polygon> pLeftFace = make_shared<struct Polygon>(4);
-	pLeftFace->SetVertex(0, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pLeftFace->SetVertex(1, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pLeftFace->SetVertex(2, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pLeftFace->SetVertex(3, Vertex(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pMesh->AddPolygon(pLeftFace);
+	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
 
-	shared_ptr<struct Polygon> pRightFace = make_shared<struct Polygon>(4);
-	pRightFace->SetVertex(0, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pRightFace->SetVertex(1, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pRightFace->SetVertex(2, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth));
-	pRightFace->SetVertex(3, Vertex(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth));
-	pMesh->AddPolygon(pRightFace);
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+
+	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
+
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	
+	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
+
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+
+	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
+
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+
+	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
+	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
 
 }
 
-void MeshHelper::CreateRollercoasterRailMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute, float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias, const XMFLOAT4& xmf4Color)
+void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
+	shared_ptr<Mesh<DiffusedVertex>> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute, float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias, const XMFLOAT4& xmf4Color)
 {
 	assert(nControlPoints != 0);
 
@@ -391,8 +455,6 @@ void MeshHelper::CreateRollercoasterRailMesh(shared_ptr<Mesh<DiffusedVertex>> pM
 		  v2, v3 : normalize(cross(p[i+1] - p[i]), up)) 하여 방향을 찾고 적절한 너비만큼의 간격으로 점을 찾으면 됨 (+- 방향 * (width / 2))
 
 	*/
-	
-	std::ofstream out{ "roll.txt" };
 
 	// 4. 레일
 	vector<shared_ptr<struct Polygon>> pPolygons;
@@ -429,26 +491,46 @@ void MeshHelper::CreateRollercoasterRailMesh(shared_ptr<Mesh<DiffusedVertex>> pM
 		XMStoreFloat3(&xmf3Vertex3, xmvVertex3);
 		XMStoreFloat3(&xmf3Vertex4, xmvVertex4);
 
-		pRail->SetVertex(0, Vertex{ xmf3Vertex1 });
-		pRail->SetVertex(1, Vertex{ xmf3Vertex2 });
-		pRail->SetVertex(2, Vertex{ xmf3Vertex3 });
-		pRail->SetVertex(3, Vertex{ xmf3Vertex4 });
+		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex1, xmf4Color });
+		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex2, xmf4Color });
+		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex3, xmf4Color });
+		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex4, xmf4Color });
 
-		pPolygons.push_back(pRail);
-
-	}
-
-	pMesh->m_pPolygons.resize((SplinePoints.size() - 2));
-	for (const auto& [index, pPolygon] : views::enumerate(pPolygons)) {
-		pMesh->SetPolygon(index, pPolygon);
+		UINT uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
+		pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 4, uiLastVertexIdx - 1 });
+		pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 1, uiLastVertexIdx - 2 });
 	}
 
 	// 5. 기둥
 	for (int i = 1; i < nControlPoints; ++i) {
-		int nPillarIndex = i * nInterpolateBias;
-		GenerateRollercoasterPillarPolygon(pMesh, pPolygons[nPillarIndex]->m_Vertices[0], 0.5f, 0.5f);
-		GenerateRollercoasterPillarPolygon(pMesh, pPolygons[nPillarIndex]->m_Vertices[1], 0.5f, 0.5f);
+		int nPillarIndex = i * nInterpolateBias * 2;
+		GenerateRollercoasterPillarPolygon(pd3dDevice, pd3dCommandList, pMesh, pMesh->m_xmf3Vertices[pMesh->m_uiIndices[nPillarIndex][0]].m_xmf3Position, 0.5f, 0.5f, xmf4Color);
+		GenerateRollercoasterPillarPolygon(pd3dDevice, pd3dCommandList, pMesh, pMesh->m_xmf3Vertices[pMesh->m_uiIndices[nPillarIndex][1]].m_xmf3Position, 0.5f, 0.5f, xmf4Color);
 	}
+
+
+	pMesh->m_pd3dVertexBuffer = ::CreateBufferResources(pd3dDevice, pd3dCommandList, pMesh->m_xmf3Vertices.data(),
+		pMesh->m_nStride * pMesh->m_xmf3Vertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &pMesh->m_pd3dVertexUploadBuffer);
+
+	pMesh->m_d3dVertexBufferView.BufferLocation = pMesh->m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dVertexBufferView.StrideInBytes = pMesh->m_nStride;
+	pMesh->m_d3dVertexBufferView.SizeInBytes = pMesh->m_nStride * pMesh->m_xmf3Vertices.size();
+
+	pMesh->m_pd3dIndexBuffer = ::CreateBufferResources(
+		pd3dDevice,
+		pd3dCommandList,
+		pMesh->m_uiIndices.data(),
+		sizeof(UINT) * (pMesh->m_uiIndices.size() * 3),
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER,
+		&pMesh->m_pd3dIndexUploadBuffer
+	);
+
+	pMesh->m_d3dIndexBufferView.BufferLocation = pMesh->m_pd3dIndexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	pMesh->m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * (pMesh->m_uiIndices.size() * 3);
+
+
 
 	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fCourseRadius, fCourseRadius, fCourseRadius), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 

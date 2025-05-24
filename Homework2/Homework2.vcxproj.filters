@@ -272,8 +272,9 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="BasicShader.hlsl">
+    <FxCompile Include="DiffusedShader.hlsl">
       <Filter>소스 파일\Shader\HLSL</Filter>
     </FxCompile>
+    <FxCompile Include="InstancingShader.hlsl" />
   </ItemGroup>
 </Project>

@@ -32,4 +32,8 @@ struct Index {
 		};
 		UINT data[3];
 	};
+
+	UINT operator[](size_t idx) {
+		return data[idx];
+	}
 };

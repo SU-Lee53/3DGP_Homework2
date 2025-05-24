@@ -17,7 +17,6 @@ public:
 
 	virtual void CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {}
 	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {}
-	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, XMFLOAT4X4& pxmf4x4World) {}
 	virtual void ReleaseShaderVariables() {}
 
 	virtual void OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {}
