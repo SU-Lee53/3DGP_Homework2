@@ -1,6 +1,8 @@
 #pragma once
 #include "Transform.h"
 
+class Shader;
+
 enum TAG_GAMEOBJECT_TYPE : UINT8 {
 	TAG_GAMEOBJECT_TYPE_DEFAULT = 0,
 	TAG_GAMEOBJECT_TYPE_PLAYER = 0,
@@ -12,7 +14,7 @@ enum TAG_GAMEOBJECT_TYPE : UINT8 {
 	TAG_GAMEOBJECT_TYPE_UNDEFINED = 99
 };
 
-class GameObject {
+class GameObject : public std::enable_shared_from_this<GameObject> {
 public:
 	GameObject();
 	virtual ~GameObject() { 
@@ -22,7 +24,7 @@ public:
 public:
 	void SetActive(BOOL bActive) { m_bActive = bActive; }
 	BOOL IsActive() { return m_bActive; }
-	void SetMesh(const std::shared_ptr<Mesh>& pMesh); 
+	void SetMesh(const std::shared_ptr<Mesh_Base>& pMesh); 
 
 	void SetColor(COLORREF color) { m_Color = color; }
 	void SetName(std::string_view svName) { m_strObjectName = svName; }
@@ -35,6 +37,9 @@ public:
 
 	std::string_view GetName() { return m_strObjectName; }
 
+	std::shared_ptr<Shader>& GetShader() { return m_pShader; }
+	std::shared_ptr<Mesh_Base>& GetMesh() { return m_pMesh; }
+
 
 	void LookTo(const XMFLOAT3& xmf3LookTo, const XMFLOAT3& xmf3Up);
 	void LookAt(const XMFLOAT3& xmf3LookAt, const XMFLOAT3& xmf3Up);
@@ -43,8 +48,7 @@ public:
 
 	virtual void Initialize();
 	virtual void Update(float fElapsedTime);
-	virtual void Render(HDC hDCFrameBuffer, std::shared_ptr<class Camera> pCamera);
-	void Render(HDC hDCFrameBuffer, XMFLOAT4X4& pxmf4x4World, std::shared_ptr<Mesh> pMesh) const;
+	virtual void Render(std::shared_ptr<class Camera> pCamera);
 
 
 	virtual void OnPicked() { }
@@ -62,7 +66,8 @@ public:
 protected:
 	BOOL							m_bActive = TRUE;
 	
-	std::shared_ptr<class Mesh>		m_pMesh = nullptr;
+	std::shared_ptr<Mesh_Base>		m_pMesh = nullptr;
+	std::shared_ptr<Shader>			m_pShader = nullptr;
 	std::shared_ptr<Transform>		m_pTransform = nullptr;
 
 	BoundingOrientedBox				m_xmOBB = BoundingOrientedBox{};

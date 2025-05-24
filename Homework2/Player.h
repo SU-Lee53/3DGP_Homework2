@@ -3,13 +3,12 @@
 
 class Camera;
 
-class Player : public GameObject, public std::enable_shared_from_this<Player> {
+class Player : public GameObject {
 public:
 	Player();
 	virtual ~Player();
 
 public:
-
 	void SetCameraOffset(const XMFLOAT3& xmf3CameraOffset);
 	XMFLOAT3& GetCameraOffset() { return m_xmf3CameraOffset; }
 
@@ -24,7 +23,7 @@ public:
 
 	virtual void ProcessMouseInput(float fTimeElapsed) {};
 	virtual void ProcessKeyboardInput(float fTimeElapsed) {};
-	virtual void Render(HDC hDCFrameBuffer, std::shared_ptr<Camera> pCamera);
+	virtual void Render(std::shared_ptr<Camera> pCamera);
 
 	void SetCamera(std::shared_ptr<Camera> pCamera) { m_pCamera = pCamera; }
 	std::shared_ptr<Camera>& GetCamera() { return m_pCamera; }

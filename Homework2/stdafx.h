@@ -104,6 +104,7 @@ inline bool IsEqual(float fA, float fB) { return (::IsZero(fA - fB)); }
 #include "Defines.h"
 
 #include "InputManager.h"
+#include "RenderManager.h"
 #include "RandomGenerator.h"
 #include "XMMathHelper.h"
 #include "MeshHelper.h"

@@ -2,13 +2,14 @@
 #include "GameObject.h"
 #include "Mesh.h"
 #include "Camera.h"
+#include "Shader.h"
 
 GameObject::GameObject()
 {
 	m_pTransform = std::make_shared<Transform>();
 }
 
-void GameObject::SetMesh(const std::shared_ptr<Mesh>& pMesh)
+void GameObject::SetMesh(const std::shared_ptr<Mesh_Base>& pMesh)
 {
 	m_pMesh = pMesh;
 	m_xmOBB = m_pMesh->GetOBB();
@@ -55,11 +56,6 @@ void GameObject::UpdateBoundingBox()
 	}
 }
 
-void GameObject::Render(HDC hDCFrameBuffer, XMFLOAT4X4& xmf4x4World, std::shared_ptr<Mesh> pMesh) const
-{
-	
-}
-
 void GameObject::Initialize()
 {
 }
@@ -73,10 +69,10 @@ void GameObject::Update(float fElapsedTime)
 
 }
 
-void GameObject::Render(HDC hDCFrameBuffer, std::shared_ptr<class Camera> pCamera)
+void GameObject::Render(std::shared_ptr<class Camera> pCamera)
 {
 	if (pCamera->IsInFrustum(m_xmOBB)) {
-		GameObject::Render(hDCFrameBuffer, m_pTransform->GetWorldMatrix(), m_pMesh);
+		RENDER.Add
 	}
 }
 

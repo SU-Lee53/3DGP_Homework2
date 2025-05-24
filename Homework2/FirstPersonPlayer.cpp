@@ -14,7 +14,7 @@ FirstPersonPlayer::~FirstPersonPlayer()
 void FirstPersonPlayer::Initialize()
 {
 	m_pCamera = make_shared<FirstPersonCamera>();
-	m_pCamera->Initialize(shared_from_this());
+	m_pCamera->Initialize(static_pointer_cast<Player>(shared_from_this()));
 	m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 	m_pCamera->SetFOVAngle(60.0f);
 	m_pCamera->SetNearZ(1.01f);

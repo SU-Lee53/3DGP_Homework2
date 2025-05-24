@@ -19,7 +19,7 @@ TankPlayer::~TankPlayer()
 void TankPlayer::Initialize()
 {
 	m_pCamera = make_shared<ThirdPersonCamera>();
-	m_pCamera->Initialize(shared_from_this());
+	m_pCamera->Initialize(static_pointer_cast<Player>(shared_from_this()));
 	m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 	m_pCamera->SetFOVAngle(60.0f);
 	m_pCamera->SetNearZ(1.01f);
@@ -27,13 +27,13 @@ void TankPlayer::Initialize()
 	SetCameraOffset(XMFLOAT3{ 0.f, 3.0f, -10.0f });
 
 
-	shared_ptr<Mesh> pTankMesh = make_shared<Mesh>();
+	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateMeshFromOBJFiles(pTankMesh, L"../Resources/Tank.obj");
 	SetMesh(pTankMesh);
 	SetColor(RGB(0, 255, 0));
 	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
 
-	shared_ptr<Mesh> pBulletMesh = make_shared<Mesh>();
+	shared_ptr<Mesh<DiffusedVertex>> pBulletMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateCubeMesh(pBulletMesh, 0.5f, 0.5f, 1.f);
 	std::generate_n(m_pBullets.begin(), BULLET_COUNT, [this, &pBulletMesh]()->std::shared_ptr<BulletObject> {
 		shared_ptr<BulletObject> pBullet = make_shared<BulletObject>(m_fBulletEffectiveRange);
@@ -48,11 +48,11 @@ void TankPlayer::Initialize()
 	XMFLOAT3 xmf3ShieldSize;
 	XMStoreFloat3(&xmf3ShieldSize, XMVectorScale(XMLoadFloat3(&m_xmOBB.Extents), 2.0));
 	float fShieldSize = std::max(std::max(xmf3ShieldSize.x, xmf3ShieldSize.y), xmf3ShieldSize.z);
-	m_pShieldMesh = make_shared<Mesh>();
+	m_pShieldMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateCubeMesh(m_pShieldMesh, fShieldSize, fShieldSize, fShieldSize);
 
 	m_pShieldObject = make_shared<ShieldObject>();
-	m_pShieldObject->SetOwner(shared_from_this());
+	m_pShieldObject->SetOwner(static_pointer_cast<Player>(shared_from_this()));
 	m_pShieldObject->Initialize();
 
 }
@@ -67,19 +67,19 @@ void TankPlayer::Update(float fTimeElapsed)
 	m_pShieldObject->Update(fTimeElapsed);
 }
 
-void TankPlayer::Render(HDC hDCFrameBuffer, std::shared_ptr<Camera> pCamera)
+void TankPlayer::Render(std::shared_ptr<Camera> pCamera)
 {
 	if (pCamera->IsInFrustum(m_xmOBB)) {
-		GameObject::Render(hDCFrameBuffer, m_pTransform->GetWorldMatrix(), m_pMesh);
+		GameObject::Render(m_pTransform->GetWorldMatrix(), m_pMesh);
 
 		if (m_bShieldOn) {
-			m_pShieldObject->Render(hDCFrameBuffer, pCamera);
+			m_pShieldObject->Render(pCamera);
 		}
 	}
 
 
-	std::for_each(m_pBullets.begin(), m_pBullets.end(), [&hDCFrameBuffer, &pCamera](std::shared_ptr<BulletObject>& p) {
-		if (p->IsActive()) p->Render(hDCFrameBuffer, pCamera);
+	std::for_each(m_pBullets.begin(), m_pBullets.end(), [&pCamera](std::shared_ptr<BulletObject>& p) {
+		if (p->IsActive()) p->Render(pCamera);
 	});
 
 }

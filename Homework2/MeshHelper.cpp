@@ -5,62 +5,84 @@
 
 using namespace std;
 
-void MeshHelper::CreateCubeMesh(shared_ptr<Mesh> pMesh, float fWidth, float fHeight, float fDepth)
+void MeshHelper::CreateCubeMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, const XMFLOAT4& xmf4Color)
 {
-	pMesh->m_pPolygons.resize(6);
+	pMesh->m_xmf3Vertices.resize(8);
+	pMesh->m_nStride = sizeof(DiffusedVertex);
+	pMesh->m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
-	float fHalfWidth = fWidth * 0.5f;
-	float fHalfHeight = fHeight * 0.5f;
-	float fHalfDepth = fDepth * 0.5f;
+	// fWidth	-> x-axis length
+	// fHeight	-> y-axis length
+	// fDepth	-> z-axis length
 
-	shared_ptr<struct Polygon> pFrontFace = make_shared<struct Polygon>(4);
-	pFrontFace->SetVertex(0, Vertex(-fHalfWidth, +fHalfHeight, -fHalfDepth));
-	pFrontFace->SetVertex(1, Vertex(+fHalfWidth, +fHalfHeight, -fHalfDepth));
-	pFrontFace->SetVertex(2, Vertex(+fHalfWidth, -fHalfHeight, -fHalfDepth));
-	pFrontFace->SetVertex(3, Vertex(-fHalfWidth, -fHalfHeight, -fHalfDepth));
-	pMesh->SetPolygon(0, pFrontFace);
+	float fx = fWidth * 0.5f;
+	float fy = fHeight * 0.5f;
+	float fz = fDepth * 0.5f;
 
-	shared_ptr<struct Polygon> pTopFace = make_shared<struct Polygon>(4);
-	pTopFace->SetVertex(0, Vertex(-fHalfWidth, +fHalfHeight, +fHalfDepth));
-	pTopFace->SetVertex(1, Vertex(+fHalfWidth, +fHalfHeight, +fHalfDepth));
-	pTopFace->SetVertex(2, Vertex(+fHalfWidth, +fHalfHeight, -fHalfDepth));
-	pTopFace->SetVertex(3, Vertex(-fHalfWidth, +fHalfHeight, -fHalfDepth));
-	pMesh->SetPolygon(1, pTopFace);
+	pMesh->m_xmf3Vertices[0] = DiffusedVertex(XMFLOAT3(-fx, +fy, -fz), xmf4Color);
+	pMesh->m_xmf3Vertices[1] = DiffusedVertex(XMFLOAT3(+fx, +fy, -fz), xmf4Color);
+	pMesh->m_xmf3Vertices[2] = DiffusedVertex(XMFLOAT3(+fx, +fy, +fz), xmf4Color);
+	pMesh->m_xmf3Vertices[3] = DiffusedVertex(XMFLOAT3(-fx, +fy, +fz), xmf4Color);
+	pMesh->m_xmf3Vertices[4] = DiffusedVertex(XMFLOAT3(-fx, -fy, -fz), xmf4Color);
+	pMesh->m_xmf3Vertices[5] = DiffusedVertex(XMFLOAT3(+fx, -fy, -fz), xmf4Color);
+	pMesh->m_xmf3Vertices[6] = DiffusedVertex(XMFLOAT3(+fx, -fy, +fz), xmf4Color);
+	pMesh->m_xmf3Vertices[7] = DiffusedVertex(XMFLOAT3(-fx, -fy, +fz), xmf4Color);
 
-	shared_ptr<struct Polygon> pBackFace = make_shared<struct Polygon>(4);
-	pBackFace->SetVertex(0, Vertex(-fHalfWidth, -fHalfHeight, +fHalfDepth));
-	pBackFace->SetVertex(1, Vertex(+fHalfWidth, -fHalfHeight, +fHalfDepth));
-	pBackFace->SetVertex(2, Vertex(+fHalfWidth, +fHalfHeight, +fHalfDepth));
-	pBackFace->SetVertex(3, Vertex(-fHalfWidth, +fHalfHeight, +fHalfDepth));
-	pMesh->SetPolygon(2, pBackFace);
 
-	shared_ptr<struct Polygon> pBottomFace = make_shared<struct Polygon>(4);
-	pBottomFace->SetVertex(0, Vertex(-fHalfWidth, -fHalfHeight, -fHalfDepth));
-	pBottomFace->SetVertex(1, Vertex(+fHalfWidth, -fHalfHeight, -fHalfDepth));
-	pBottomFace->SetVertex(2, Vertex(+fHalfWidth, -fHalfHeight, +fHalfDepth));
-	pBottomFace->SetVertex(3, Vertex(-fHalfWidth, -fHalfHeight, +fHalfDepth));
-	pMesh->SetPolygon(3, pBottomFace);
+	pMesh->m_pd3dVertexBuffer = ::CreateBufferResources(pd3dDevice, pd3dCommandList, pMesh->m_xmf3Vertices.data(),
+		pMesh->m_nStride * pMesh->m_xmf3Vertices.size(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &pMesh->m_pd3dVertexUploadBuffer);
 
-	shared_ptr<struct Polygon> pLeftFace = make_shared<struct Polygon>(4);
-	pLeftFace->SetVertex(0, Vertex(-fHalfWidth, +fHalfHeight, +fHalfDepth));
-	pLeftFace->SetVertex(1, Vertex(-fHalfWidth, +fHalfHeight, -fHalfDepth));
-	pLeftFace->SetVertex(2, Vertex(-fHalfWidth, -fHalfHeight, -fHalfDepth));
-	pLeftFace->SetVertex(3, Vertex(-fHalfWidth, -fHalfHeight, +fHalfDepth));
-	pMesh->SetPolygon(4, pLeftFace);
+	pMesh->m_d3dVertexBufferView.BufferLocation = pMesh->m_pd3dVertexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dVertexBufferView.StrideInBytes = pMesh->m_nStride;
+	pMesh->m_d3dVertexBufferView.SizeInBytes = pMesh->m_nStride * pMesh->m_xmf3Vertices.size();
 
-	shared_ptr<struct Polygon> pRightFace = make_shared<struct Polygon>(4);
-	pRightFace->SetVertex(0, Vertex(+fHalfWidth, +fHalfHeight, -fHalfDepth));
-	pRightFace->SetVertex(1, Vertex(+fHalfWidth, +fHalfHeight, +fHalfDepth));
-	pRightFace->SetVertex(2, Vertex(+fHalfWidth, -fHalfHeight, +fHalfDepth));
-	pRightFace->SetVertex(3, Vertex(+fHalfWidth, -fHalfHeight, -fHalfDepth));
-	pMesh->SetPolygon(5, pRightFace);
 
-	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fHalfWidth, fHalfHeight, fHalfDepth), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	pMesh->m_uiIndices.resize(12);
+
+	// Front
+	pMesh->m_uiIndices[0] = { 3,1,0 };
+	pMesh->m_uiIndices[1] = { 2,1,3 };
+
+	// Top
+	pMesh->m_uiIndices[2] = { 0,5,4 };
+	pMesh->m_uiIndices[3] = { 1,5,0 };
+
+	// Back
+	pMesh->m_uiIndices[4] = { 3,4,7 };
+	pMesh->m_uiIndices[5] = { 0,4,3 };
+
+	// Bottom
+	pMesh->m_uiIndices[6] = { 1,6,5 };
+	pMesh->m_uiIndices[7] = { 2,6,1 };
+
+	// Left
+	pMesh->m_uiIndices[8] = { 2,7,6 };
+	pMesh->m_uiIndices[9] = { 3,7,2 };
+
+	// Right
+	pMesh->m_uiIndices[10] = { 6,4,5 };
+	pMesh->m_uiIndices[11] = { 7,4,6 };
+
+	pMesh->m_pd3dIndexBuffer = ::CreateBufferResources(
+		pd3dDevice,
+		pd3dCommandList,
+		pMesh->m_uiIndices.data(),
+		sizeof(UINT) * (pMesh->m_uiIndices.size() * 3),
+		D3D12_HEAP_TYPE_DEFAULT,
+		D3D12_RESOURCE_STATE_INDEX_BUFFER,
+		&pMesh->m_pd3dIndexUploadBuffer
+	);
+
+	pMesh->m_d3dIndexBufferView.BufferLocation = pMesh->m_pd3dIndexBuffer->GetGPUVirtualAddress();
+	pMesh->m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	pMesh->m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * (pMesh->m_uiIndices.size() * 3);
+
+	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fx, fy, fz), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
-void MeshHelper::CreateWallMesh(shared_ptr<Mesh> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects)
+void MeshHelper::CreateWallMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects, const XMFLOAT4& xmf4Color)
 {
-	pMesh->m_pPolygons.resize((6 * nSubRects * nSubRects));
+	pMesh->m_xmf3Vertices.reserve((6 * nSubRects * nSubRects));
 
 	float fHalfWidth = fWidth * 0.5f;
 	float fHalfHeight = fHeight * 0.5f;
@@ -70,63 +92,69 @@ void MeshHelper::CreateWallMesh(shared_ptr<Mesh> pMesh, float fWidth, float fHei
 	float fCellDepth = fDepth * (1.0f / nSubRects);
 
 	int k = 0;
-	shared_ptr<struct Polygon> pLeftFace;
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			pLeftFace = make_shared<struct Polygon>(4);
-			pLeftFace->SetVertex(0, Vertex(-fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + (j * fCellDepth)));
-			pLeftFace->SetVertex(1, Vertex(-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),		-fHalfDepth + (j * fCellDepth)));
-			pLeftFace->SetVertex(2, Vertex(-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),		-fHalfDepth + ((j + 1) * fCellDepth)));
-			pLeftFace->SetVertex(3, Vertex(-fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + ((j + 1) * fCellDepth)));
-			pMesh->SetPolygon(k++, pLeftFace);
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth, -fHalfHeight + (i * fCellHeight),		-fHalfDepth + (j * fCellDepth) },xmf4Color });			// 0
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + (j * fCellDepth) }, xmf4Color });			// 1
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });	// 2
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });	// 3
+			
+			UINT lastVertexIndex = pMesh->m_xmf3Vertices.size();
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
 		}
 	}
 
 	shared_ptr<struct Polygon> pRightFace;
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			pRightFace = make_shared<struct Polygon>(4);
-			pRightFace->SetVertex(0, Vertex(+fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + (j * fCellDepth)));
-			pRightFace->SetVertex(1, Vertex(+fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + (j * fCellDepth)));
-			pRightFace->SetVertex(2, Vertex(+fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + ((j + 1) * fCellDepth)));
-			pRightFace->SetVertex(3, Vertex(+fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + ((j + 1) * fCellDepth)));
-			pMesh->SetPolygon(k++, pRightFace);
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + (i * fCellHeight),		-fHalfDepth + (j * fCellDepth) }, xmf4Color});
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + (i * fCellHeight),		-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
+			
+			UINT lastVertexIndex = pMesh->m_xmf3Vertices.size();
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
 		}
 	}
 
-	shared_ptr<struct Polygon> pTopFace;
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			pTopFace = make_shared<struct Polygon>(4);
-			pTopFace->SetVertex(0, Vertex(-fHalfWidth + (i * fCellWidth),			+fHalfHeight,	-fHalfDepth + (j * fCellDepth)));
-			pTopFace->SetVertex(1, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),		+fHalfHeight,	-fHalfDepth + (j * fCellDepth)));
-			pTopFace->SetVertex(2, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),		+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth)));
-			pTopFace->SetVertex(3, Vertex(-fHalfWidth + (i * fCellWidth),			+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth)));
-			pMesh->SetPolygon(k++, pTopFace);
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),			+fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),		+fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),		+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color});
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),			+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color});
+
+			UINT lastVertexIndex = pMesh->m_xmf3Vertices.size();
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
 		}
 	}
 
-	shared_ptr<struct Polygon> pBottomFace;
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			pBottomFace = make_shared<struct Polygon>(4);
-			pBottomFace->SetVertex(0, Vertex(-fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + (j * fCellDepth)));
-			pBottomFace->SetVertex(1, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + (j * fCellDepth)));
-			pBottomFace->SetVertex(2, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth)));
-			pBottomFace->SetVertex(3, Vertex(-fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth)));
-			pMesh->SetPolygon(k++, pBottomFace);
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
+
+			UINT lastVertexIndex = pMesh->m_xmf3Vertices.size();
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
 		}
 	}
 
-	shared_ptr<struct Polygon> pFrontFace;
 	for (int i = 0; i < nSubRects; i++) {
 		for (int j = 0; j < nSubRects; j++) {
-			pFrontFace = make_shared<struct Polygon>(4);
-			pFrontFace->SetVertex(0, Vertex(-fHalfWidth + (i * fCellWidth),			-fHalfHeight + (j * fCellHeight),		+fHalfDepth));
-			pFrontFace->SetVertex(1, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		+fHalfDepth));
-			pFrontFace->SetVertex(2, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth));
-			pFrontFace->SetVertex(3, Vertex(-fHalfWidth + (i * fCellWidth),			-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth));
-			pMesh->SetPolygon(k++, pFrontFace);
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + (j * fCellHeight),		+fHalfDepth }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		+fHalfDepth }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth }, xmf4Color });
+
+			UINT lastVertexIndex = pMesh->m_xmf3Vertices.size();
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
 		}
 	}
 
@@ -134,180 +162,21 @@ void MeshHelper::CreateWallMesh(shared_ptr<Mesh> pMesh, float fWidth, float fHei
 	for (int i = 0; i < nSubRects; i++) {
 		for (int j = 0; j < nSubRects; j++) {
 			pBackFace = make_shared<struct Polygon>(4);
-			pBackFace->SetVertex(0, Vertex(-fHalfWidth + (i * fCellWidth),			-fHalfHeight + (j * fCellHeight),		-fHalfDepth));
-			pBackFace->SetVertex(1, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		-fHalfDepth));
-			pBackFace->SetVertex(2, Vertex(-fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth));
-			pBackFace->SetVertex(3, Vertex(-fHalfWidth + (i * fCellWidth),			-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth));
-			pMesh->SetPolygon(k++, pBackFace);
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + (j * fCellHeight),		-fHalfDepth }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		-fHalfDepth }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth }, xmf4Color });
+			pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth }, xmf4Color });
+
+			UINT lastVertexIndex = pMesh->m_xmf3Vertices.size();
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
+			pMesh->m_uiIndices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
 		}
 	}
 
 	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fHalfWidth, fHalfHeight, fHalfDepth), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
-void MeshHelper::CreateAirplaneMesh(shared_ptr<Mesh> pMesh, float fWidth, float fHeight, float fDepth)
-{
-	pMesh->m_pPolygons.resize(24);
-
-	float fx = fWidth * 0.5f, fy = fHeight * 0.5f, fz = fDepth * 0.5f;
-
-	float x1 = fx * 0.2f, y1 = fy * 0.2f, x2 = fx * 0.1f, y3 = fy * 0.3f, y2 = ((y1 - (fy - y3)) / x1) * x2 + (fy - y3);
-	int i = 0;
-
-	//Upper Plane
-	shared_ptr<struct Polygon> pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, +(fy + y3), -fz));
-	pFace->SetVertex(1, Vertex(+x1, -y1, -fz));
-	pFace->SetVertex(2, Vertex(0.0f, 0.0f, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, +(fy + y3), -fz));
-	pFace->SetVertex(1, Vertex(0.0f, 0.0f, -fz));
-	pFace->SetVertex(2, Vertex(-x1, -y1, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(+x2, +y2, -fz));
-	pFace->SetVertex(1, Vertex(+fx, -y3, -fz));
-	pFace->SetVertex(2, Vertex(+x1, -y1, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(-x2, +y2, -fz));
-	pFace->SetVertex(1, Vertex(-x1, -y1, -fz));
-	pFace->SetVertex(2, Vertex(-fx, -y3, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	//Lower Plane
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, +(fy + y3), +fz));
-	pFace->SetVertex(1, Vertex(0.0f, 0.0f, +fz));
-	pFace->SetVertex(2, Vertex(+x1, -y1, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, +(fy + y3), +fz));
-	pFace->SetVertex(1, Vertex(-x1, -y1, +fz));
-	pFace->SetVertex(2, Vertex(0.0f, 0.0f, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(+x2, +y2, +fz));
-	pFace->SetVertex(1, Vertex(+x1, -y1, +fz));
-	pFace->SetVertex(2, Vertex(+fx, -y3, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(-x2, +y2, +fz));
-	pFace->SetVertex(1, Vertex(-fx, -y3, +fz));
-	pFace->SetVertex(2, Vertex(-x1, -y1, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	//Right Plane
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, +(fy + y3), -fz));
-	pFace->SetVertex(1, Vertex(0.0f, +(fy + y3), +fz));
-	pFace->SetVertex(2, Vertex(+x2, +y2, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(+x2, +y2, -fz));
-	pFace->SetVertex(1, Vertex(0.0f, +(fy + y3), +fz));
-	pFace->SetVertex(2, Vertex(+x2, +y2, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(+x2, +y2, -fz));
-	pFace->SetVertex(1, Vertex(+x2, +y2, +fz));
-	pFace->SetVertex(2, Vertex(+fx, -y3, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(+fx, -y3, -fz));
-	pFace->SetVertex(1, Vertex(+x2, +y2, +fz));
-	pFace->SetVertex(2, Vertex(+fx, -y3, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	//Back/Right Plane
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(+x1, -y1, -fz));
-	pFace->SetVertex(1, Vertex(+fx, -y3, -fz));
-	pFace->SetVertex(2, Vertex(+fx, -y3, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(+x1, -y1, -fz));
-	pFace->SetVertex(1, Vertex(+fx, -y3, +fz));
-	pFace->SetVertex(2, Vertex(+x1, -y1, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, 0.0f, -fz));
-	pFace->SetVertex(1, Vertex(+x1, -y1, -fz));
-	pFace->SetVertex(2, Vertex(+x1, -y1, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, 0.0f, -fz));
-	pFace->SetVertex(1, Vertex(+x1, -y1, +fz));
-	pFace->SetVertex(2, Vertex(0.0f, 0.0f, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	//Left Plane
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, +(fy + y3), +fz));
-	pFace->SetVertex(1, Vertex(0.0f, +(fy + y3), -fz));
-	pFace->SetVertex(2, Vertex(-x2, +y2, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, +(fy + y3), +fz));
-	pFace->SetVertex(1, Vertex(-x2, +y2, -fz));
-	pFace->SetVertex(2, Vertex(-x2, +y2, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(-x2, +y2, +fz));
-	pFace->SetVertex(1, Vertex(-x2, +y2, -fz));
-	pFace->SetVertex(2, Vertex(-fx, -y3, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(-x2, +y2, +fz));
-	pFace->SetVertex(1, Vertex(-fx, -y3, -fz));
-	pFace->SetVertex(2, Vertex(-fx, -y3, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	//Back/Left Plane
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, 0.0f, -fz));
-	pFace->SetVertex(1, Vertex(0.0f, 0.0f, +fz));
-	pFace->SetVertex(2, Vertex(-x1, -y1, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(0.0f, 0.0f, -fz));
-	pFace->SetVertex(1, Vertex(-x1, -y1, +fz));
-	pFace->SetVertex(2, Vertex(-x1, -y1, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(-x1, -y1, -fz));
-	pFace->SetVertex(1, Vertex(-x1, -y1, +fz));
-	pFace->SetVertex(2, Vertex(-fx, -y3, +fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pFace = make_shared<struct Polygon>(3);
-	pFace->SetVertex(0, Vertex(-x1, -y1, -fz));
-	pFace->SetVertex(1, Vertex(-fx, -y3, +fz));
-	pFace->SetVertex(2, Vertex(-fx, -y3, -fz));
-	pMesh->SetPolygon(i++, pFace);
-
-	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fx, fy, fz), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
-}
-
-BOOL MeshHelper::CreateMeshFromOBJFiles(shared_ptr<Mesh> pMesh, wstring_view wstrObjPath)
+BOOL MeshHelper::CreateMeshFromOBJFiles(shared_ptr<Mesh<DiffusedVertex>> pMesh, wstring_view wstrObjPath, const XMFLOAT4& xmf4Color)
 {
 	ifstream in{ wstrObjPath.data() };
 
@@ -315,7 +184,7 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(shared_ptr<Mesh> pMesh, wstring_view wst
 
 	// 1. 파일에서 읽어옴
 	vector<XMFLOAT3> LoadedVertices;
-	vector<XMINT3> LoadedIndices;
+	vector<Index> LoadedIndices;
 	std::string strRead{};
 	while (in >> strRead) {
 		if (strRead == "v") {
@@ -325,9 +194,9 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(shared_ptr<Mesh> pMesh, wstring_view wst
 		}
 
 		if (strRead == "f") {
-			float n1, n2, n3;
+			UINT n1, n2, n3;
 			in >> n1 >> n2 >> n3;
-			LoadedIndices.emplace_back(n1, n2, n3);
+			LoadedIndices.push_back(Index{ n1, n2, n3 });
 		}
 	}
 
@@ -352,21 +221,18 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(shared_ptr<Mesh> pMesh, wstring_view wst
 
 	XMFLOAT3 xmf3NewCenter = { (itNewMaxX->x + itNewMinX->x) / 2, (itNewMaxY->y + itNewMinY->y) / 2, (itNewMaxZ->z + itNewMinZ->z) / 2 };
 
-	pMesh->m_pPolygons.resize(LoadedIndices.size());
-	for (const auto& [index, xmi3Indices] : std::views::enumerate(LoadedIndices)) {
-		shared_ptr<struct Polygon> pPolygon = make_shared<struct Polygon>(3);
-		pPolygon->SetVertex(0, Vertex{ LoadedVertices[xmi3Indices.x - 1] });
-		pPolygon->SetVertex(1, Vertex{ LoadedVertices[xmi3Indices.y - 1] });
-		pPolygon->SetVertex(2, Vertex{ LoadedVertices[xmi3Indices.z - 1] });
-		pMesh->SetPolygon(index, pPolygon);
+	for (const XMFLOAT3& xmf3Vertex : LoadedVertices) {
+		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex, xmf4Color });
 	}
+
+	std::copy(LoadedIndices.begin(), LoadedIndices.end(), std::back_inserter(pMesh->m_uiIndices));
 
 	XMFLOAT3 xmf3ObbExtent = Vector3::Subtract(XMFLOAT3{ itNewMaxX->x, itNewMaxY->y, itNewMaxZ->z }, xmf3NewCenter);
 	pMesh->m_xmOBB = BoundingOrientedBox(xmf3NewCenter, xmf3ObbExtent, XMFLOAT4{ 0.f, 0.f, 0.f, 1.f });
 
 }
 
-void GenerateRollercoasterPillarPolygon(shared_ptr<Mesh> pMesh, XMFLOAT3 xmf3TopPosition, float fWidth, float fDepth)
+void GenerateRollercoasterPillarPolygon(shared_ptr<Mesh<DiffusedVertex>> pMesh, XMFLOAT3 xmf3TopPosition, float fWidth, float fDepth, const XMFLOAT4& xmf4Color)
 {
 	XMFLOAT3 xmf3PillarCenter;
 	XMStoreFloat3(&xmf3PillarCenter, XMVectorMultiply(XMLoadFloat3(&xmf3TopPosition), XMVectorSet(1.0f, 0.5f, 1.0f, 0.0f)));
@@ -419,7 +285,7 @@ void GenerateRollercoasterPillarPolygon(shared_ptr<Mesh> pMesh, XMFLOAT3 xmf3Top
 
 }
 
-void MeshHelper::CreateRollercoasterRailMesh(shared_ptr<Mesh> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute, float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias)
+void MeshHelper::CreateRollercoasterRailMesh(shared_ptr<Mesh<DiffusedVertex>> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute, float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias, const XMFLOAT4& xmf4Color)
 {
 	assert(nControlPoints != 0);
 
@@ -569,13 +435,6 @@ void MeshHelper::CreateRollercoasterRailMesh(shared_ptr<Mesh> pMesh, OUT std::ve
 		pRail->SetVertex(3, Vertex{ xmf3Vertex4 });
 
 		pPolygons.push_back(pRail);
-
-		out << i << "번째" << std::endl;
-		out << "1" << xmf3Vertex1.x << ", " << xmf3Vertex1.y << ", " << xmf3Vertex1.z << std::endl;
-		out << "2" << xmf3Vertex2.x << ", " << xmf3Vertex2.y << ", " << xmf3Vertex2.z << std::endl;
-		out << "3" << xmf3Vertex1.x << ", " << xmf3Vertex1.y << ", " << xmf3Vertex1.z << std::endl;
-		out << "4" << xmf3Vertex1.x << ", " << xmf3Vertex1.y << ", " << xmf3Vertex1.z << std::endl;
-
 
 	}
 

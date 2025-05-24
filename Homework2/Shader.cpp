@@ -1,6 +1,14 @@
 #include "stdafx.h"
 #include "Shader.h"
 
+Shader::Shader()
+{
+}
+
+Shader::~Shader()
+{
+}
+
 void Shader::CompileShaderFromFile(std::wstring_view wstrFileName, std::string_view strShaderName, std::string_view strShaderProfile)
 {
 	UINT nCompileFlags = 0;
@@ -28,6 +36,18 @@ void Shader::CompileShaderFromFile(std::wstring_view wstrFileName, std::string_v
 			__debugbreak();
 		}
 	}
+}
+
+/////////////////
+// BasicShader // 
+/////////////////
+
+BasicShader::BasicShader()
+{
+}
+
+BasicShader::~BasicShader()
+{
 }
 
 D3D12_RASTERIZER_DESC BasicShader::CreateRasterizerState()

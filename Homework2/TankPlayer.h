@@ -12,7 +12,7 @@ public:
 public:
 	virtual void Initialize() override;
 	virtual void Update(float fTimeElapsed) override;
-	virtual void Render(HDC hDCFrameBuffer, std::shared_ptr<Camera> pCamera);
+	virtual void Render(std::shared_ptr<Camera> pCamera);
 
 public:
 	virtual void ProcessKeyboardInput(float fTimeElapsed) override;

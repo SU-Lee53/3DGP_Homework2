@@ -22,3 +22,14 @@ struct DiffusedVertex {
 private:
 	static std::vector<D3D12_INPUT_ELEMENT_DESC> m_InputElementDesc;
 };
+
+struct Index {
+	union {
+		struct {
+			UINT v0;
+			UINT v1;
+			UINT v2;
+		};
+		UINT data[3];
+	};
+};
