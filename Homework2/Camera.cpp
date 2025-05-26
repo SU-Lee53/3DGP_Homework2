@@ -7,6 +7,8 @@ using namespace std;
 
 Camera::Camera()
 {
+	m_d3dViewport = { 0,0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f };
+	m_d3dScissorRect = { 0,0,FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
 }
 
 Camera::~Camera()
@@ -22,8 +24,16 @@ void Camera::SetFOVAngle(float fAngle)
 
 void Camera::SetViewport(int xTopLeft, int yTopLeft, int nWidth, int nHeight)
 {
-	m_Viewport.SetViewport(xTopLeft, yTopLeft, nWidth, nHeight);
-	m_fAspectRatio = float(m_Viewport.m_nWidth) / float(m_Viewport.m_nHeight);
+	m_d3dViewport.TopLeftX = xTopLeft;
+	m_d3dViewport.TopLeftY = yTopLeft;
+	m_d3dViewport.Width = nWidth;
+	m_d3dViewport.Height = nHeight;
+	m_d3dViewport.MinDepth = 0.0f;
+	m_d3dViewport.MaxDepth = 1.0f;
+
+	m_d3dScissorRect = { 0,0,nWidth, nHeight };
+
+	m_fAspectRatio = float(m_d3dViewport.Width) / float(m_d3dViewport.Height);
 	m_bProjectionUpdated = TRUE;
 }
 
@@ -124,6 +134,30 @@ XMFLOAT4X4& Camera::GetViewOrthographicProjectMatrix()
 	return m_xmf4x4ViewOrthographicProject;
 }
 
+void Camera::SetViewportAndScissorRects(ComPtr<ID3D12GraphicsCommandList> pd3dGraphicsCommansList)
+{
+	pd3dGraphicsCommansList->RSSetViewports(1, &m_d3dViewport);
+	pd3dGraphicsCommansList->RSSetScissorRects(1, &m_d3dScissorRect);
+}
+
+void Camera::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+	m_upcbCameraData = make_unique<ConstantBuffer<CB_CAMERA_DATA>>(pd3dDevice, pd3dCommandList);
+}
+
+void Camera::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+	m_upcbCameraData->SetBufferToPipeline(pd3dCommandList, 0);
+
+	XMFLOAT4X4 xmmtxViewProj;
+	XMMATRIX xmmtxView = XMLoadFloat4x4(&m_xmf4x4View);
+	XMMATRIX xmmtxProj = XMLoadFloat4x4(&m_xmf4x4PerspectiveProject);
+
+	XMStoreFloat4x4(&xmmtxViewProj, XMMatrixTranspose(XMMatrixMultiply(xmmtxView, xmmtxProj)));
+
+	m_upcbCameraData->UpdateData(CB_CAMERA_DATA{ xmmtxViewProj });
+}
+
 void Camera::Initialize(shared_ptr<Player> pOwnerPlayer)
 {
 	m_wpOwner = pOwnerPlayer;
@@ -191,7 +225,7 @@ void Camera::GeneratePerspectiveProjectionMatrix()
 
 void Camera::GenerateOrthographicProjectionMatrix()
 {
-	XMMATRIX xmmtxOrthographic = XMMatrixOrthographicLH(m_Viewport.m_nWidth, m_Viewport.m_nHeight, m_fNearZ, m_fFarZ);
+	XMMATRIX xmmtxOrthographic = XMMatrixOrthographicLH(m_d3dViewport.Width, m_d3dViewport.Height, m_fNearZ, m_fFarZ);
 	XMStoreFloat4x4(&m_xmf4x4OrthographicProject, xmmtxOrthographic);
 }
 

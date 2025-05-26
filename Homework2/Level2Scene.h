@@ -10,11 +10,11 @@ public:
 	virtual ~Level2Scene() { }
 
 public:
-	virtual void BuildObjects() override;
+	virtual void BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 	virtual void ReleaseObjects() override;
 
 	virtual void Update(float fTimeElapsed) override;
-	virtual void Render(HDC hDCFrameBuffer) override;
+	virtual void Render() override;
 
 public:
 	virtual void ProcessMouseInput(float fTimeElapsed) override;

@@ -13,9 +13,9 @@ public:
 		 
 	}
 
-	static COLORREF GenerateRandomColor() {
-		std::uniform_int_distribution<int> uid{ 0, 255 };
-		return RGB(uid(g_dre), uid(g_dre), uid(g_dre));
+	static XMFLOAT4 GenerateRandomColor() {
+		std::uniform_real_distribution<float> uid{ 0.f, 1.f };
+		return XMFLOAT4(uid(g_dre), uid(g_dre), uid(g_dre), 1.0f);
 	}
 
 	static XMVECTOR GenerateRandomUnitVectorOnSphere() {

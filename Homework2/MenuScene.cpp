@@ -5,7 +5,7 @@
 
 using namespace std;
 
-void MenuScene::BuildObjects()
+void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	m_bSceneChanged = FALSE;
 
@@ -119,7 +119,7 @@ void MenuScene::Update(float fTimeElapsed)
 	}
 }
 
-void MenuScene::Render(HDC hDCFrameBuffer)
+void MenuScene::Render()
 {
 }
 

@@ -23,7 +23,7 @@ public:
 public:
 	virtual void Initialize() override;
 	virtual void Update(float fTimeElapsed) override;
-	virtual void Render(HDC hDCFrameBuffer, std::shared_ptr<Camera> pCamera);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> m_pd3dCommandList, std::shared_ptr<Camera> pCamera);
 	virtual void OnPicked() override;
 	virtual	void BeginCollision(std::shared_ptr<GameObject> pOther) override;
 

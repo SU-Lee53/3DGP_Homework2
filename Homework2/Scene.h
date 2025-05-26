@@ -23,11 +23,11 @@ public:
 	TAG_SCENE_NAME GetSceneTag() { return m_eSceneTag; }
 
 public:
-	virtual void BuildObjects();
+	virtual void BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
 	virtual void ReleaseObjects();
 
 	virtual void Update(float fElapsedTime);
-	virtual void Render(HDC hDCFrameBuffer);
+	virtual void Render();
 	
 	virtual void ProcessMouseInput(float fTimeElapsed) { }
 	virtual void ProcessKeyboardInput(float fTimeElapsed) { }

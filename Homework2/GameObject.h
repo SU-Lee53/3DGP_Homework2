@@ -1,5 +1,6 @@
 #pragma once
 #include "Transform.h"
+#include "Mesh.h"
 
 class Shader;
 
@@ -26,7 +27,7 @@ public:
 	BOOL IsActive() { return m_bActive; }
 	void SetMesh(const std::shared_ptr<Mesh_Base>& pMesh); 
 
-	void SetColor(COLORREF color) { m_Color = color; }
+	void SetColor(const XMFLOAT4& color) { m_xmf4Color = color; }
 	void SetName(std::string_view svName) { m_strObjectName = svName; }
 
 	void SetMeshDefaultOrientation(const XMFLOAT3& xmf3Orientation) { m_xmf3DefaultOrientation = xmf3Orientation; }
@@ -39,6 +40,7 @@ public:
 
 	std::shared_ptr<Shader>& GetShader() { return m_pShader; }
 	std::shared_ptr<Mesh_Base>& GetMesh() { return m_pMesh; }
+	XMFLOAT4& GetColor() { return m_xmf4Color; }
 
 
 	void LookTo(const XMFLOAT3& xmf3LookTo, const XMFLOAT3& xmf3Up);
@@ -72,7 +74,7 @@ protected:
 
 	BoundingOrientedBox				m_xmOBB = BoundingOrientedBox{};
 
-	COLORREF						m_Color = RGB(255, 0, 0);
+	XMFLOAT4						m_xmf4Color = XMFLOAT4{ 0.f, 0.f, 0.f, 1.f };
 
 	TAG_GAMEOBJECT_TYPE				m_eObjectType = TAG_GAMEOBJECT_TYPE_DEFAULT;
 	std::string						m_strObjectName = "";

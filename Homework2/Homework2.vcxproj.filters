@@ -67,6 +67,9 @@
     <Filter Include="소스 파일\Shader\HLSL">
       <UniqueIdentifier>{3bdec173-a138-4ecc-a463-fdf97f24081c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\Shader\Shader Resources">
+      <UniqueIdentifier>{0e9f8223-1423-4094-83cf-1bac9f37f95b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -168,6 +171,15 @@
     <ClInclude Include="VertexType.h">
       <Filter>소스 파일\Mesh</Filter>
     </ClInclude>
+    <ClInclude Include="ConstantBuffer.h">
+      <Filter>소스 파일\Shader\Shader Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="StructuredBuffer.h">
+      <Filter>소스 파일\Shader\Shader Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderManager.h">
+      <Filter>소스 파일\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -257,6 +269,15 @@
     <ClCompile Include="VertexType.cpp">
       <Filter>소스 파일\Mesh</Filter>
     </ClCompile>
+    <ClCompile Include="ConstantBuffer.cpp">
+      <Filter>소스 파일\Shader\Shader Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="StructuredBuffer.cpp">
+      <Filter>소스 파일\Shader\Shader Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderManager.cpp">
+      <Filter>소스 파일\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Homework2.rc">
@@ -275,6 +296,8 @@
     <FxCompile Include="DiffusedShader.hlsl">
       <Filter>소스 파일\Shader\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="InstancingShader.hlsl" />
+    <FxCompile Include="InstancingShader.hlsl">
+      <Filter>소스 파일\Shader\HLSL</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

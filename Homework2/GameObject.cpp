@@ -72,7 +72,7 @@ void GameObject::Update(float fElapsedTime)
 void GameObject::Render(std::shared_ptr<class Camera> pCamera)
 {
 	if (pCamera->IsInFrustum(m_xmOBB)) {
-		RENDER.Add
+		RENDER.Add(shared_from_this());
 	}
 }
 

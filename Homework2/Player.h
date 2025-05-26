@@ -23,7 +23,7 @@ public:
 
 	virtual void ProcessMouseInput(float fTimeElapsed) {};
 	virtual void ProcessKeyboardInput(float fTimeElapsed) {};
-	virtual void Render(std::shared_ptr<Camera> pCamera);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> m_pd3dCommandList, std::shared_ptr<Camera> pCamera);
 
 	void SetCamera(std::shared_ptr<Camera> pCamera) { m_pCamera = pCamera; }
 	std::shared_ptr<Camera>& GetCamera() { return m_pCamera; }

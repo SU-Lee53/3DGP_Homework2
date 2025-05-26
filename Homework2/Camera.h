@@ -17,6 +17,11 @@ struct Viewport {
 class Player;
 class Transform;
 
+struct CB_CAMERA_DATA {
+	XMFLOAT4X4 xmf4ViewProjection = {};
+};
+
+
 class Camera {
 public:
 	Camera();
@@ -40,13 +45,20 @@ public:
 	virtual BOOL Rotate(const XMVECTOR& xmvNewRotation);
 	virtual BOOL Rotate(float fPitch, float fYaw, float fRoll);
 
-	Viewport& GetViewport() { return m_Viewport; }
+	D3D12_VIEWPORT& GetViewport() { return m_d3dViewport; }
+
 	XMFLOAT4X4& GetViewMatrix() { return m_xmf4x4View; }
 	XMFLOAT4X4& GetInverseViewMatrix() { return m_xmf4x4View; }
 	XMFLOAT4X4& GetPerspectiveProjectMatrix() { return m_xmf4x4PerspectiveProject; }
 	XMFLOAT4X4& GetViewPerspectiveProjectMatrix();
 	XMFLOAT4X4& GetOrthographicProjectMatrix() { return m_xmf4x4OrthographicProject; }
 	XMFLOAT4X4& GetViewOrthographicProjectMatrix();
+
+public:
+	void SetViewportAndScissorRects(ComPtr<ID3D12GraphicsCommandList> pd3dGraphicsCommansList);
+	void CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+	void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+
 
 public:
 	virtual void Initialize(std::shared_ptr<Player> pOwnerPlayer);
@@ -83,12 +95,17 @@ protected:
 	XMFLOAT4X4 m_xmf4x4OrthographicProject = Matrix4x4::Identity(); 
 	XMFLOAT4X4 m_xmf4x4ViewOrthographicProject = Matrix4x4::Identity(); 
 
-	Viewport m_Viewport = {};
+	D3D12_VIEWPORT	m_d3dViewport = {};
+	D3D12_RECT		m_d3dScissorRect = {};
 
 	std::weak_ptr<Player> m_wpOwner;
 
 	BOOL m_bViewUpdated = TRUE;
 	BOOL m_bProjectionUpdated = TRUE;
+
+protected:
+	std::unique_ptr<ConstantBuffer<CB_CAMERA_DATA>> m_upcbCameraData;
+
 
 };
 

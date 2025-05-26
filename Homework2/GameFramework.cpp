@@ -30,6 +30,8 @@ void GameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd, bool bEnableDeb
 	CreateDepthStencilView();
 
 	INPUT.OnCreate(m_hWnd);
+	RENDER.OnCreate();
+	SHADER.OnCreate(m_pd3dDevice, m_pd3dCommandList);
 
 	_tcscpy_s(m_pszFrameRate, _T("LabProject ("));
 }
@@ -53,6 +55,8 @@ void GameFramework::Render()
 	RenderBegin();
 	
 	// TODO : Render Logic
+
+	GameFramework::m_pCurrentScene->Render(m_pd3dCommandList);
 
 	RenderEnd();
 	Present();
@@ -482,6 +486,12 @@ void GameFramework::RenderBegin()
 
 	m_pd3dCommandList->ClearDepthStencilView(d3dDSVDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.f, 0, 0, NULL);
 }
+
+void Render() 
+{
+
+}
+
 
 void GameFramework::RenderEnd()
 {

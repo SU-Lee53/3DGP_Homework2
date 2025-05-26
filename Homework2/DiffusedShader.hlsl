@@ -12,12 +12,15 @@ struct VS_BASIC_OUTPUT
     float4 color : COLOR;
 };
 
-cbuffer cbTansformData : register(b0) 
+cbuffer cbCameraData : register(b0)
 {
-    matrix gmtxWorld;
     matrix gmtxViewProjection;
 };
 
+cbuffer cbWorldTransformData : register(b1)
+{
+    matrix gmtxWorld;
+}
 
 VS_BASIC_OUTPUT VSBasic(VS_BASIC_INPUT input)
 {

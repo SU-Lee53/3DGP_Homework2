@@ -19,6 +19,7 @@ public:
 
 	virtual void ReleaseUploadBuffers() {};
 
+	BoundingOrientedBox& SetOBB(const BoundingOrientedBox& obb) { m_xmOBB = obb; }
 	BoundingOrientedBox& GetOBB() { return m_xmOBB; }
 
 protected:
@@ -33,6 +34,27 @@ public:
 	virtual ~Mesh() {}
 
 public:
+	void SetVertices(std::span<T> vertices) {
+		m_Vertices.clear();
+		m_Vertices.reserve(vertices.size());
+		std::copy(vertices.begin(), vertices.end(), std::back_inserter(m_Vertices));
+	}
+
+	void SetIndices(std::span<Index> indices) {
+		m_uiIndices.clear();
+		m_uiIndices.reserve(indices.size());
+		std::copy(indices.begin(), indices.end(), std::back_inserter(m_uiIndices));
+	}
+
+	void SetSlot(UINT nSlot) { m_nSlot = nSlot; }
+	void SetStride(UINT nStride) { m_nStride = nStride; }
+	void SetOffset(UINT nOffset) { m_nOffset = nOffset; }
+	
+	void SetStartIndex(UINT nIndex) { m_nStartIndex = nIndex; }
+	void SetBaseVertex(UINT nBase) { m_nBaseVertex = nBase; }
+
+	void CreateVertexBuffer();
+
 
 	void Create(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
@@ -40,11 +62,10 @@ public:
 
 	virtual int CheckRayIntersection(const XMVECTOR& xmvPickRayOrigin, const XMVECTOR& xmvPickRayDirection, float& fNearHitDistance) override;
 
-
 	virtual void ReleaseUploadBuffers() override;
 
 protected:
-	std::vector<T>			m_xmf3Vertices = {};
+	std::vector<T>			m_Vertices = {};
 	ComPtr<ID3D12Resource>	m_pd3dVertexBuffer = nullptr;
 	ComPtr<ID3D12Resource>	m_pd3dVertexUploadBuffer = nullptr;
 
@@ -64,15 +85,6 @@ protected:
 	UINT m_nStartIndex = 0;
 	UINT m_nBaseVertex = 0;
 
-#pragma region Friend_MeshHelper
-	friend void MeshHelper::CreateCubeMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, const XMFLOAT4& xmf4Color);
-	friend void MeshHelper::CreateWallMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects, const XMFLOAT4& xmf4Color);
-	friend BOOL MeshHelper::CreateMeshFromOBJFiles(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Mesh<DiffusedVertex>> pMesh, std::wstring_view wstrObjPath, const XMFLOAT4& xmf4Color);
-	friend void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, shared_ptr<Mesh<DiffusedVertex>> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute, float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias, const XMFLOAT4& xmf4Color);
-	friend void GenerateRollercoasterPillarPolygon(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, shared_ptr<Mesh<DiffusedVertex>> pMesh, XMFLOAT3 xmf3TopPosition, float fWidth, float fDepth, const XMFLOAT4& xmf4Color);
-	
-
-#pragma endregion
 };
 
 template<typename T>
@@ -89,15 +101,15 @@ void Mesh<T>::ReleaseUploadBuffers()
 template<typename T>
 void Mesh<T>::Create(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	assert(!m_xmf3Vertices.empty());
+	assert(!m_Vertices.empty());
 
 	// Vertex Buffer + Vertex Buffer View
-	m_pd3dVertexBuffer = ::CreateBufferResources(pd3dDevice, pd3dCommandList, (void*)m_xmf3Vertices.data(), m_nStride * m_xmf3Vertices.size(),
+	m_pd3dVertexBuffer = ::CreateBufferResources(pd3dDevice, pd3dCommandList, (void*)m_Vertices.data(), m_nStride * m_Vertices.size(),
 		D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_pd3dVertexUploadBuffer.GetAddressOf());
 
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
-	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_xmf3Vertices.size();
+	m_d3dVertexBufferView.SizeInBytes = m_nStride * m_Vertices.size();
 
 	// Index Buffer + Index Buffer View
 	m_pd3dIndexBuffer = ::CreateBufferResources(
@@ -128,7 +140,7 @@ void Mesh<T>::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 		pd3dCommandList->DrawIndexedInstanced(m_uiIndices.size(), 1, 0, 0, 0);
 	}
 	else {
-		pd3dCommandList->DrawInstanced(m_xmf3Vertices.size(), 1, m_nOffset, 0);
+		pd3dCommandList->DrawInstanced(m_Vertices.size(), 1, m_nOffset, 0);
 	}
 }
 
@@ -142,7 +154,7 @@ void Mesh<T>::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, UINT nIn
 		pd3dCommandList->DrawIndexedInstanced(m_uiIndices.size(), nInstances, 0, 0, 0);
 	}
 	else {
-		pd3dCommandList->DrawInstanced(m_xmf3Vertices.size(), nInstances, m_nOffset, 0);
+		pd3dCommandList->DrawInstanced(m_Vertices.size(), nInstances, m_nOffset, 0);
 	}
 }
 
@@ -153,9 +165,9 @@ int Mesh<T>::CheckRayIntersection(const XMVECTOR& xmvPickRayOrigin, const XMVECT
 	bool bIntersected = m_xmOBB.Intersects(xmvPickRayOrigin, xmvPickRayDirection, fNearHitDistance);
 
 	for (auto polygon : m_uiIndices | std::views::chunk(3)) {
-		XMVECTOR v0 = XMLoadFloat3(&m_xmf3Vertices[polygon[0]]);
-		XMVECTOR v1 = XMLoadFloat3(&m_xmf3Vertices[polygon[1]]);
-		XMVECTOR v2 = XMLoadFloat3(&m_xmf3Vertices[polygon[2]]);
+		XMVECTOR v0 = XMLoadFloat3(&m_Vertices[polygon[0]]);
+		XMVECTOR v1 = XMLoadFloat3(&m_Vertices[polygon[1]]);
+		XMVECTOR v2 = XMLoadFloat3(&m_Vertices[polygon[2]]);
 		BOOL bIntersected = RayIntersectionByTriangle(xmvPickRayOrigin, xmvPickRayDirection, v0, v1, v2, fNearHitDistance);
 		if (bIntersected) nIntersections++;
 	}

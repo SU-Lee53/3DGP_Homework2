@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void Level2Scene::BuildObjects()
+void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	m_bSceneChanged = FALSE;
 
@@ -123,7 +123,7 @@ void Level2Scene::Update(float fTimeElapsed)
 
 }
 
-void Level2Scene::Render(HDC hDCFrameBuffer)
+void Level2Scene::Render()
 {
 }
 

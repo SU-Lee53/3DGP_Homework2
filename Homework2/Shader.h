@@ -6,21 +6,29 @@ public:
 	virtual ~Shader();
 
 public:
-	virtual D3D12_RASTERIZER_DESC CreateRasterizerState() {}
-	virtual D3D12_BLEND_DESC CreateBlendState() {}
-	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState() {}
+	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
+	virtual D3D12_BLEND_DESC CreateBlendState();
+	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
 
 	virtual void CreateVertexShader() {}
 	virtual void CreatePixelShader() {}
 
-	virtual void CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12RootSignature> pd3dRootSignature) {}
+	virtual void CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+
+	virtual void CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice) {}
 
 	virtual void CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {}
-	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {}
-	virtual void ReleaseShaderVariables() {}
+	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas = 1) {}
 
 	virtual void OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {}
 	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera) {}
+
+	void SetRootSignature(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {
+		pd3dCommandList->SetGraphicsRootSignature(m_pd3dRootSignature.Get());
+	}
+	void SetPipelineState(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) {
+		pd3dCommandList->SetPipelineState(m_pd3dPipelineState.Get());
+	}
 
 	D3D12_SHADER_BYTECODE GetVSByteCode() {
 		return D3D12_SHADER_BYTECODE{ m_pVSBlob->GetBufferPointer(), m_pVSBlob->GetBufferSize() };
@@ -35,19 +43,23 @@ protected:
 		std::string_view strShaderProfile);
 
 protected:
-	// Array of shader's pipeline
 	ComPtr<ID3D12RootSignature> m_pd3dRootSignature = nullptr;
-	std::vector<ComPtr<ID3D12PipelineState>> m_pd3dPipelineStates = {};
+	ComPtr<ID3D12PipelineState> m_pd3dPipelineState = nullptr;
 
 	ComPtr<ID3DBlob> m_pVSBlob = nullptr;
 	ComPtr<ID3DBlob> m_pPSBlob = nullptr;
 
 };
 
-class BasicShader : public Shader {
+struct VS_TRANSFORM_DATA {
+	XMFLOAT4X4 gmtxWorld;
+	XMFLOAT4 color;
+};
+
+class DiffusedShader : public Shader {
 public:
-	BasicShader();
-	virtual ~BasicShader();
+	DiffusedShader();
+	virtual ~DiffusedShader();
 
 public:
 	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
@@ -57,14 +69,45 @@ public:
 	virtual void CreateVertexShader();
 	virtual void CreatePixelShader();
 
-	virtual void CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12RootSignature> pd3dRootSignature);
+	virtual void CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+
+	virtual void CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice);
 
 	virtual void CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
-	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
-	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, XMFLOAT4X4& pxmf4x4World);
-	virtual void ReleaseShaderVariables();
+	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas = 1);
 
 	virtual void OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
 	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera);
+
+private:
+	std::unique_ptr<ConstantBuffer<VS_TRANSFORM_DATA>> m_upConstantBuffer;
+
+};
+
+class InstancedShader : public Shader {
+public:
+	InstancedShader();
+	virtual ~InstancedShader();
+
+public:
+	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();
+	virtual D3D12_BLEND_DESC CreateBlendState();
+	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
+
+	virtual void CreateVertexShader();
+	virtual void CreatePixelShader();
+
+	virtual void CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+
+	virtual void CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice);
+
+	virtual void CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+	virtual void UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas = 1);
+
+	virtual void OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera);
+
+private:
+	std::unique_ptr<StructuredBuffer<VS_TRANSFORM_DATA>> m_upStructuredBuffer;
 
 };

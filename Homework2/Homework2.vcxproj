@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClInclude Include="BulletObject.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="ExplosiveObject.h" />
     <ClInclude Include="FirstPersonCamera.h" />
@@ -152,10 +153,12 @@
     <ClInclude Include="RenderManager.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="ShieldObject.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Homework2.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="StructuredBuffer.h" />
     <ClInclude Include="TankObject.h" />
     <ClInclude Include="TankPlayer.h" />
     <ClInclude Include="targetver.h" />
@@ -168,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="BulletObject.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ConstantBuffer.cpp" />
     <ClCompile Include="ExplosiveObject.cpp" />
     <ClCompile Include="FirstPersonCamera.cpp" />
     <ClCompile Include="FirstPersonPlayer.cpp" />
@@ -198,11 +202,13 @@
     <ClCompile Include="RenderManager.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="ShieldObject.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="StructuredBuffer.cpp" />
     <ClCompile Include="TankObject.cpp" />
     <ClCompile Include="TankPlayer.cpp" />
     <ClCompile Include="ThirdPersonCamera.cpp" />
@@ -219,8 +225,14 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="DiffusedShader.hlsl" />
-    <FxCompile Include="InstancingShader.hlsl" />
+    <FxCompile Include="DiffusedShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="InstancingShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

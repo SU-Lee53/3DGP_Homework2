@@ -5,15 +5,15 @@
 
 using namespace std;
 
-void TitleScene::BuildObjects()
+void TitleScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	m_bSceneChanged = FALSE;
 
-	shared_ptr<Mesh> p3DGPMesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(p3DGPMesh, L"../Resources/3D_Game_Programming.obj");
+	shared_ptr<Mesh<DiffusedVertex>> p3DGPMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, p3DGPMesh, L"../Resources/3D_Game_Programming.obj", RandomGenerator::GenerateRandomColor());
 
-	shared_ptr<Mesh> pNameMesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pNameMesh, L"../Resources/name.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pNameMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pNameMesh, L"../Resources/name.obj", RandomGenerator::GenerateRandomColor());
 
 	m_pObjects.resize(2);
 	m_pObjects[0] = make_shared<GameObject>();
@@ -66,8 +66,9 @@ void TitleScene::Update(float fTimeElapsed)
 	}
 }
 
-void TitleScene::Render(HDC hDCFrameBuffer)
+void TitleScene::Render()
 {
+	Scene::Render();
 }
 
 void TitleScene::ProcessMouseInput(float fTimeElapsed)

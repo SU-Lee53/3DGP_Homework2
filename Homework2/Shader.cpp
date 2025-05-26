@@ -9,6 +9,103 @@ Shader::~Shader()
 {
 }
 
+
+D3D12_RASTERIZER_DESC Shader::CreateRasterizerState()
+{
+	D3D12_RASTERIZER_DESC d3dRasterizerDesc;
+	::ZeroMemory(&d3dRasterizerDesc, sizeof(D3D12_RASTERIZER_DESC));
+	{
+		d3dRasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+		d3dRasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+		d3dRasterizerDesc.FrontCounterClockwise = FALSE;
+		d3dRasterizerDesc.DepthBias = 0;
+		d3dRasterizerDesc.DepthBiasClamp = 0.0f;
+		d3dRasterizerDesc.SlopeScaledDepthBias = 0.0f;
+		d3dRasterizerDesc.DepthClipEnable = TRUE;
+		d3dRasterizerDesc.MultisampleEnable = FALSE;
+		d3dRasterizerDesc.AntialiasedLineEnable = FALSE;
+		d3dRasterizerDesc.ForcedSampleCount = 0;
+		d3dRasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+	}
+
+	return d3dRasterizerDesc;
+}
+
+D3D12_BLEND_DESC Shader::CreateBlendState()
+{
+	D3D12_BLEND_DESC d3dBlendDesc;
+	::ZeroMemory(&d3dBlendDesc, sizeof(D3D12_BLEND_DESC));
+	{
+		d3dBlendDesc.AlphaToCoverageEnable = FALSE;
+		d3dBlendDesc.IndependentBlendEnable = FALSE;
+		d3dBlendDesc.RenderTarget[0].BlendEnable = FALSE;
+		d3dBlendDesc.RenderTarget[0].LogicOpEnable = FALSE;
+		d3dBlendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+		d3dBlendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
+		d3dBlendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+		d3dBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+		d3dBlendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+		d3dBlendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		d3dBlendDesc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+		d3dBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	}
+
+	return d3dBlendDesc;
+
+}
+
+D3D12_DEPTH_STENCIL_DESC Shader::CreateDepthStencilState() 
+{
+	D3D12_DEPTH_STENCIL_DESC d3dDepthStencilDesc;
+	::ZeroMemory(&d3dDepthStencilDesc, sizeof(D3D12_DEPTH_STENCIL_DESC));
+	{
+		d3dDepthStencilDesc.DepthEnable = TRUE;
+		d3dDepthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+		d3dDepthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+		d3dDepthStencilDesc.StencilEnable = FALSE;
+		d3dDepthStencilDesc.StencilReadMask = 0x00;
+		d3dDepthStencilDesc.StencilWriteMask = 0x00;
+		d3dDepthStencilDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		d3dDepthStencilDesc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		d3dDepthStencilDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		d3dDepthStencilDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+		d3dDepthStencilDesc.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+		d3dDepthStencilDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+		d3dDepthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+		d3dDepthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+	}
+
+	return d3dDepthStencilDesc;
+}
+
+void Shader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+	CreateRootSignature(pd3dDevice);
+	CreateVertexShader();
+	CreatePixelShader();
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC d3dPipelineStateDesc;
+	::ZeroMemory(&d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	{
+		d3dPipelineStateDesc.pRootSignature = m_pd3dRootSignature.Get();
+		d3dPipelineStateDesc.VS = GetVSByteCode();
+		d3dPipelineStateDesc.PS = GetPSByteCode();
+		d3dPipelineStateDesc.RasterizerState = CreateRasterizerState();
+		d3dPipelineStateDesc.BlendState = CreateBlendState();
+		d3dPipelineStateDesc.DepthStencilState = CreateDepthStencilState();
+		d3dPipelineStateDesc.InputLayout = DiffusedVertex::GetInputLayout();
+		d3dPipelineStateDesc.SampleMask = UINT_MAX;
+		d3dPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		d3dPipelineStateDesc.NumRenderTargets = 1;
+		d3dPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		d3dPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		d3dPipelineStateDesc.SampleDesc.Count = 1;
+		d3dPipelineStateDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	}
+	pd3dDevice->CreateGraphicsPipelineState(&d3dPipelineStateDesc, IID_PPV_ARGS(m_pd3dPipelineState.GetAddressOf()));
+
+}
+
 void Shader::CompileShaderFromFile(std::wstring_view wstrFileName, std::string_view strShaderName, std::string_view strShaderProfile)
 {
 	UINT nCompileFlags = 0;
@@ -38,155 +135,241 @@ void Shader::CompileShaderFromFile(std::wstring_view wstrFileName, std::string_v
 	}
 }
 
-/////////////////
-// BasicShader // 
-/////////////////
+////////////////////
+// DiffusedShader // 
+////////////////////
 
-BasicShader::BasicShader()
+DiffusedShader::DiffusedShader()
 {
 }
 
-BasicShader::~BasicShader()
+DiffusedShader::~DiffusedShader()
 {
 }
 
-D3D12_RASTERIZER_DESC BasicShader::CreateRasterizerState()
+D3D12_RASTERIZER_DESC DiffusedShader::CreateRasterizerState()
 {
-	D3D12_RASTERIZER_DESC d3dRasterizerDesc;
-	::ZeroMemory(&d3dRasterizerDesc, sizeof(D3D12_RASTERIZER_DESC));
-	{
-		d3dRasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-		d3dRasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
-		d3dRasterizerDesc.FrontCounterClockwise = FALSE;
-		d3dRasterizerDesc.DepthBias = 0;
-		d3dRasterizerDesc.DepthBiasClamp = 0.0f;
-		d3dRasterizerDesc.SlopeScaledDepthBias = 0.0f;
-		d3dRasterizerDesc.DepthClipEnable = TRUE;
-		d3dRasterizerDesc.MultisampleEnable = FALSE;
-		d3dRasterizerDesc.AntialiasedLineEnable = FALSE;
-		d3dRasterizerDesc.ForcedSampleCount = 0;
-		d3dRasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-	}
-
-	return d3dRasterizerDesc;
+	return Shader::CreateRasterizerState();
 }
 
-D3D12_BLEND_DESC BasicShader::CreateBlendState()
+D3D12_BLEND_DESC DiffusedShader::CreateBlendState()
 {
-	D3D12_BLEND_DESC d3dBlendDesc;
-	::ZeroMemory(&d3dBlendDesc, sizeof(D3D12_BLEND_DESC));
-	{
-		d3dBlendDesc.AlphaToCoverageEnable = FALSE;
-		d3dBlendDesc.IndependentBlendEnable = FALSE;
-		d3dBlendDesc.RenderTarget[0].BlendEnable = FALSE;
-		d3dBlendDesc.RenderTarget[0].LogicOpEnable = FALSE;
-		d3dBlendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
-		d3dBlendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
-		d3dBlendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-		d3dBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-		d3dBlendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
-		d3dBlendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-		d3dBlendDesc.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
-		d3dBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-	}
-
-	return d3dBlendDesc;
-
+	return Shader::CreateBlendState();
 }
 
-D3D12_DEPTH_STENCIL_DESC BasicShader::CreateDepthStencilState()
+D3D12_DEPTH_STENCIL_DESC DiffusedShader::CreateDepthStencilState()
 {
-	D3D12_DEPTH_STENCIL_DESC d3dDepthStencilDesc;
-	::ZeroMemory(&d3dDepthStencilDesc, sizeof(D3D12_DEPTH_STENCIL_DESC));
-	{
-		d3dDepthStencilDesc.DepthEnable = TRUE;
-		d3dDepthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-		d3dDepthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-		d3dDepthStencilDesc.StencilEnable = FALSE;
-		d3dDepthStencilDesc.StencilReadMask = 0x00;
-		d3dDepthStencilDesc.StencilWriteMask = 0x00;
-		d3dDepthStencilDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-		d3dDepthStencilDesc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-		d3dDepthStencilDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-		d3dDepthStencilDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
-		d3dDepthStencilDesc.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-		d3dDepthStencilDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-		d3dDepthStencilDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-		d3dDepthStencilDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
-	}
-
-	return d3dDepthStencilDesc;
+	return Shader::CreateDepthStencilState();
 }
 
-void BasicShader::CreateVertexShader()
+void DiffusedShader::CreateVertexShader()
 {
 	return CompileShaderFromFile(
-		L"BasicShader.hlsl",
+		L"DiffusedShader.hlsl",
 		"VSBasic",
 		"vs_5_1"
 	);
 }
 
-void BasicShader::CreatePixelShader()
+void DiffusedShader::CreatePixelShader()
 {
 	return CompileShaderFromFile(
-		L"BasicShader.hlsl",
+		L"DiffusedShader.hlsl",
 		"PSBasic",
 		"ps_5_1"
 	);
 }
 
-void BasicShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12RootSignature> pd3dRootSignature)
+void DiffusedShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	CreateVertexShader();
-	CreatePixelShader();
+	Shader::CreateShader(pd3dDevice, pd3dCommandList);
+}
 
-	m_pd3dPipelineStates.resize(1);
+void DiffusedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice)
+{
+	D3D12_ROOT_PARAMETER pd3dRootParameters[2];
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC d3dPipelineStateDesc;
-	::ZeroMemory(&d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	{
-		d3dPipelineStateDesc.pRootSignature = pd3dRootSignature.Get();
-		d3dPipelineStateDesc.VS = GetVSByteCode();
-		d3dPipelineStateDesc.PS = GetPSByteCode();
-		d3dPipelineStateDesc.RasterizerState = CreateRasterizerState();
-		d3dPipelineStateDesc.BlendState = CreateBlendState();
-		d3dPipelineStateDesc.DepthStencilState = CreateDepthStencilState();
-		d3dPipelineStateDesc.InputLayout = DiffusedVertex::GetInputLayout();
-		d3dPipelineStateDesc.SampleMask = UINT_MAX;
-		d3dPipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-		d3dPipelineStateDesc.NumRenderTargets = 1;
-		d3dPipelineStateDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-		d3dPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		d3dPipelineStateDesc.SampleDesc.Count = 1;
-		d3dPipelineStateDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+	// Camera data (b0)
+	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	pd3dRootParameters[0].Descriptor.ShaderRegister = 0;
+	pd3dRootParameters[0].Descriptor.RegisterSpace = 0;
+	pd3dRootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	// Transform Data (b1)
+	pd3dRootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	pd3dRootParameters[1].Descriptor.ShaderRegister = 1;
+	pd3dRootParameters[1].Descriptor.RegisterSpace = 0;
+	pd3dRootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	D3D12_ROOT_SIGNATURE_FLAGS d3dRootSignatureFlags =
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+	D3D12_ROOT_SIGNATURE_DESC d3dRootSignatureDesc;
+	::ZeroMemory(&d3dRootSignatureDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
+	d3dRootSignatureDesc.NumParameters = _countof(pd3dRootParameters);
+	d3dRootSignatureDesc.pParameters = pd3dRootParameters;
+	d3dRootSignatureDesc.NumStaticSamplers = 0;
+	d3dRootSignatureDesc.pStaticSamplers = NULL;
+	d3dRootSignatureDesc.Flags = d3dRootSignatureFlags;
+
+	ComPtr<ID3DBlob> pd3dSignatureBlob = nullptr;
+	ComPtr<ID3DBlob> pd3dErrorBlob = nullptr;
+
+	HRESULT hr = ::D3D12SerializeRootSignature(&d3dRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pd3dSignatureBlob, &pd3dErrorBlob);
+	if (FAILED(hr)) {
+		if (pd3dErrorBlob) {
+			OutputDebugStringA((char*)pd3dErrorBlob->GetBufferPointer());
+		}
 	}
-	pd3dDevice->CreateGraphicsPipelineState(&d3dPipelineStateDesc, IID_PPV_ARGS(m_pd3dPipelineStates[0].GetAddressOf()));
+
+	hr = pd3dDevice->CreateRootSignature(0, pd3dSignatureBlob->GetBufferPointer(), pd3dSignatureBlob->GetBufferSize(), IID_PPV_ARGS(m_pd3dRootSignature.GetAddressOf()));
+
+	if (FAILED(hr)) __debugbreak();
 
 }
 
 // TODO : Start from here
 
-void BasicShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+void DiffusedShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+	m_upConstantBuffer = std::make_unique<ConstantBuffer<VS_TRANSFORM_DATA>>(pd3dDevice, pd3dCommandList);
+}
+
+void DiffusedShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas)
+{
+	assert(nDatas != 1);
+
+	VS_TRANSFORM_DATA* pTransfromData = static_cast<VS_TRANSFORM_DATA*>(pData);
+	m_upConstantBuffer->UpdateData(pTransfromData);
+
+	m_upConstantBuffer->SetBufferToPipeline(pd3dCommandList, 1);
+}
+
+void DiffusedShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 }
 
-void BasicShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+void DiffusedShader::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera)
 {
 }
 
-void BasicShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, XMFLOAT4X4& pxmf4x4World)
+////////////////////
+// DiffusedShader // 
+////////////////////
+
+InstancedShader::InstancedShader()
 {
 }
 
-void BasicShader::ReleaseShaderVariables()
+InstancedShader::~InstancedShader()
 {
 }
 
-void BasicShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+D3D12_RASTERIZER_DESC InstancedShader::CreateRasterizerState()
+{
+	return Shader::CreateRasterizerState();
+}
+
+D3D12_BLEND_DESC InstancedShader::CreateBlendState()
+{
+	return Shader::CreateBlendState();
+}
+
+D3D12_DEPTH_STENCIL_DESC InstancedShader::CreateDepthStencilState()
+{
+	return Shader::CreateDepthStencilState();
+}
+
+void InstancedShader::CreateVertexShader()
+{
+	return CompileShaderFromFile(
+		L"InstancingShader.hlsl",
+		"VSInstancing",
+		"vs_5_1"
+	);
+}
+
+void InstancedShader::CreatePixelShader()
+{
+	return CompileShaderFromFile(
+		L"InstancingShader.hlsl",
+		"PSInstancing",
+		"ps_5_1"
+	);
+}
+
+void InstancedShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+	Shader::CreateShader(pd3dDevice, pd3dCommandList);
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+}
+
+void InstancedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice) 
+{
+	D3D12_ROOT_PARAMETER pd3dRootParameters[2];
+
+	// Camera data (b0)
+	pd3dRootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	pd3dRootParameters[0].Descriptor.ShaderRegister = 0;
+	pd3dRootParameters[0].Descriptor.RegisterSpace = 0;
+	pd3dRootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	// Transform Data (t0)
+	pd3dRootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
+	pd3dRootParameters[1].Descriptor.ShaderRegister = 0;
+	pd3dRootParameters[1].Descriptor.RegisterSpace = 0;
+	pd3dRootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+	D3D12_ROOT_SIGNATURE_FLAGS d3dRootSignatureFlags =
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+	D3D12_ROOT_SIGNATURE_DESC d3dRootSignatureDesc;
+	::ZeroMemory(&d3dRootSignatureDesc, sizeof(D3D12_ROOT_SIGNATURE_DESC));
+	d3dRootSignatureDesc.NumParameters = _countof(pd3dRootParameters);
+	d3dRootSignatureDesc.pParameters = pd3dRootParameters;
+	d3dRootSignatureDesc.NumStaticSamplers = 0;
+	d3dRootSignatureDesc.pStaticSamplers = NULL;
+	d3dRootSignatureDesc.Flags = d3dRootSignatureFlags;
+
+	ComPtr<ID3DBlob> pd3dSignatureBlob = nullptr;
+	ComPtr<ID3DBlob> pd3dErrorBlob = nullptr;
+
+	HRESULT hr = ::D3D12SerializeRootSignature(&d3dRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pd3dSignatureBlob, &pd3dErrorBlob);
+	if (FAILED(hr)) {
+		if (pd3dErrorBlob) {
+			OutputDebugStringA((char*)pd3dErrorBlob->GetBufferPointer());
+		}
+	}
+
+	hr = pd3dDevice->CreateRootSignature(0, pd3dSignatureBlob->GetBufferPointer(), pd3dSignatureBlob->GetBufferSize(), IID_PPV_ARGS(m_pd3dRootSignature.GetAddressOf()));
+
+	if (FAILED(hr)) __debugbreak();
+
+
+}
+
+void InstancedShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+	// 인스턴싱 최대 50개까지
+	m_upStructuredBuffer = std::make_unique<StructuredBuffer<VS_TRANSFORM_DATA>>(pd3dDevice, pd3dCommandList, 50);
+}
+
+void InstancedShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas)
 {
 }
 
-void BasicShader::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera)
+void InstancedShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+}
+
+void InstancedShader::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera)
 {
 }

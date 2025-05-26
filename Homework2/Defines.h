@@ -16,3 +16,4 @@ public:										\
 
 #define INPUT			GET_SINGLE(InputManager)
 #define RENDER			GET_SINGLE(RenderManager)
+#define SHADER			GET_SINGLE(ShaderManager)

@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void Scene::BuildObjects()
+void Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 }
 
@@ -34,8 +34,14 @@ void Scene::UpdatePipelineVaribles(std::shared_ptr<class Camera> pCamera)
 {
 }
 
-void Scene::Render(HDC hDCFrameBuffer)
+void Scene::Render()
 {
+	for (const auto pObj : m_pObjects) {
+		RENDER.Add(pObj);
+	}
+
+	RENDER.Add(m_pPlayer);
+
 }
 
 void Scene::CheckObjectByObjectCollisions()
@@ -53,8 +59,8 @@ void Scene::CheckObjectByObjectCollisions()
 std::shared_ptr<GameObject> Scene::PickObjectPointedByCursor(int xClient, int yClient, std::shared_ptr<Camera> pCamera)
 {
 	XMFLOAT3 xmf3PickPosition;
-	xmf3PickPosition.x = (((2.0f * xClient) / (float)pCamera->GetViewport().m_nWidth) - 1) / pCamera->GetPerspectiveProjectMatrix()._11;
-	xmf3PickPosition.y = -(((2.0f * yClient) / (float)pCamera->GetViewport().m_nHeight) - 1) / pCamera->GetPerspectiveProjectMatrix()._22;
+	xmf3PickPosition.x = (((2.0f * xClient) / (float)pCamera->GetViewport().Width) - 1) / pCamera->GetPerspectiveProjectMatrix()._11;
+	xmf3PickPosition.y = -(((2.0f * yClient) / (float)pCamera->GetViewport().Height) - 1) / pCamera->GetPerspectiveProjectMatrix()._22;
 	xmf3PickPosition.z = 1.0f;
 
 	XMVECTOR xmvPickPosition = XMLoadFloat3(&xmf3PickPosition);

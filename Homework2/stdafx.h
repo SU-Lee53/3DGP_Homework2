@@ -89,7 +89,7 @@ constexpr static UINT8 EXPLOSION_DEBRISES = 240;
 // Utility functions
 extern ComPtr<ID3D12Resource> CreateBufferResources(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList,
 	void* pData, UINT nBytes, D3D12_HEAP_TYPE d3dHeapType = D3D12_HEAP_TYPE_UPLOAD,
-	D3D12_RESOURCE_STATES d3dResourceStates = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, ID3D12Resource** ppd3dUploadBuffer);
+	D3D12_RESOURCE_STATES d3dResourceStates = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, ID3D12Resource** ppd3dUploadBuffer = nullptr);
 
 extern void ShowErrorMessage(std::string_view file, int line, std::string_view message);
 
@@ -103,16 +103,23 @@ inline bool IsEqual(float fA, float fB) { return (::IsZero(fA - fB)); }
 // Additional Headers
 #include "Defines.h"
 
-#include "InputManager.h"
-#include "RenderManager.h"
 #include "RandomGenerator.h"
 #include "XMMathHelper.h"
-#include "MeshHelper.h"
+
+#include "ConstantBuffer.h"
+#include "StructuredBuffer.h"
+
 
 // Game Framework
 #include "GameFramework.h"
 #include "Mesh.h"
 #include "GameObject.h"
+
+
+// Managers
+#include "InputManager.h"
+#include "RenderManager.h"
+#include "ShaderManager.h"
 
 #undef min
 #undef max

@@ -25,7 +25,7 @@ struct InstancingData
 
 StructuredBuffer<InstancingData> gInstancingDatas : register(t0);
 
-VS_BASIC_OUTPUT VSBasic(VS_BASIC_INPUT input, int instancedID : SV_InstanceID)
+VS_BASIC_OUTPUT VSInstancing(VS_BASIC_INPUT input, int instancedID : SV_InstanceID)
 {
     VS_BASIC_OUTPUT output;
     
@@ -35,7 +35,7 @@ VS_BASIC_OUTPUT VSBasic(VS_BASIC_INPUT input, int instancedID : SV_InstanceID)
     return output;
 }
 
-float PSBasic(VS_BASIC_OUTPUT input) : SV_Target
+float PSInstancing(VS_BASIC_OUTPUT input) : SV_Target
 {
     return input.color;
 }
