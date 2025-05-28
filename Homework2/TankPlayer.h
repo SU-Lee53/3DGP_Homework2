@@ -10,9 +10,9 @@ public:
 	virtual ~TankPlayer();
 
 public:
-	virtual void Initialize() override;
+	virtual void Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 	virtual void Update(float fTimeElapsed) override;
-	virtual void Render(ComPtr<ID3D12GraphicsCommandList> m_pd3dCommandList, std::shared_ptr<Camera> pCamera);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Camera> pCamera) override;
 
 public:
 	virtual void ProcessKeyboardInput(float fTimeElapsed) override;
@@ -44,7 +44,7 @@ private:
 	BOOL m_bAutoFire = TRUE;
 
 	std::shared_ptr<ShieldObject> m_pShieldObject = nullptr;
-	std::shared_ptr<Mesh> m_pShieldMesh = nullptr;
+	std::shared_ptr<Mesh<DiffusedVertex>> m_pShieldMesh = nullptr;
 	BOOL m_bShieldOn = FALSE;
 
 	std::array<std::shared_ptr<class BulletObject>, BULLET_COUNT> m_pBullets = {};

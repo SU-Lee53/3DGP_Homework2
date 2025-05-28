@@ -10,17 +10,17 @@ ShieldObject::~ShieldObject()
 {
 }
 
-void ShieldObject::Initialize()
+void ShieldObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	XMFLOAT3 xmf3ShieldSize;
 	XMStoreFloat3(&xmf3ShieldSize, XMVectorScale(XMLoadFloat3(&m_wpOwner.lock()->GetOBB().Extents), 2.0));
 	float fShieldSize = std::max(std::max(xmf3ShieldSize.x, xmf3ShieldSize.y), xmf3ShieldSize.z);
 
-	std::shared_ptr<Mesh> pShieldMesh = std::make_shared<Mesh>();
-	MeshHelper::CreateCubeMesh(pShieldMesh, fShieldSize, fShieldSize, fShieldSize);
+	std::shared_ptr<Mesh<DiffusedVertex>> pShieldMesh = std::make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateCubeMesh(pd3dDevice, pd3dCommandList, pShieldMesh, fShieldSize, fShieldSize, fShieldSize, XMFLOAT4{ 0.f, 0.f, 1.f, 1.f });
 	SetMesh(pShieldMesh);
 
-	SetColor(RGB(0, 0, 255));
+	SetColor(XMFLOAT4(0.f ,0.f, 1.f, 1.f));
 }
 
 void ShieldObject::Update(float fTimeElapsed)
@@ -31,7 +31,7 @@ void ShieldObject::Update(float fTimeElapsed)
 	GameObject::Update(fTimeElapsed);
 }
 
-void ShieldObject::Render(HDC hDCFrameBuffer, std::shared_ptr<Camera> pCamera)
+void ShieldObject::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Camera> pCamera)
 {
-	GameObject::Render(hDCFrameBuffer, pCamera);
+	GameObject::Render(pd3dCommandList, pCamera);
 }

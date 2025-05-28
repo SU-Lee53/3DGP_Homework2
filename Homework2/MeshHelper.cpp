@@ -1,18 +1,16 @@
 #include "stdafx.h"
 #include "MeshHelper.h"
+#include "VertexType.h"
 #include "Mesh.h"
-
+#include "RandomGenerator.h"
 #include <fstream>
-
-using namespace std;
+#include <ranges>
 
 void MeshHelper::CreateCubeMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
-	shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, const XMFLOAT4& xmf4Color)
+	std::shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, const XMFLOAT4& xmf4Color)
 {
 	std::vector<DiffusedVertex> vertices;
-	std::vector<Index> indices;
-
-	pMesh->SetStride(sizeof(DiffusedVertex));
+	std::vector<UINT> indices;
 
 	// fWidth	-> x-axis length
 	// fHeight	-> y-axis length
@@ -33,35 +31,36 @@ void MeshHelper::CreateCubeMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 	vertices[6] = DiffusedVertex(XMFLOAT3(+fx, -fy, +fz), xmf4Color);
 	vertices[7] = DiffusedVertex(XMFLOAT3(-fx, -fy, +fz), xmf4Color);
 
-	//Index
-	indices.resize(12);
+	indices.resize(36);
 
 	// Front
-	indices[0] = { 3,1,0 };
-	indices[1] = { 2,1,3 };
+	indices[0] = 3; indices[1] = 1; indices[2] = 0;
+	indices[3] = 2; indices[4] = 1; indices[5] = 3;
 
 	// Top
-	indices[2] = { 0,5,4 };
-	indices[3] = { 1,5,0 };
+	indices[6] = 0; indices[7] = 5; indices[8] = 4;
+	indices[9] = 1; indices[10] = 5; indices[11] = 0;
 
 	// Back
-	indices[4] = { 3,4,7 };
-	indices[5] = { 0,4,3 };
+	indices[12] = 3; indices[13] = 4; indices[14] = 7;
+	indices[15] = 0; indices[16] = 4; indices[17] = 3;
 
 	// Bottom
-	indices[6] = { 1,6,5 };
-	indices[7] = { 2,6,1 };
+	indices[18] = 1; indices[19] = 6; indices[20] = 5;
+	indices[21] = 2; indices[22] = 6; indices[23] = 1;
 
 	// Left
-	indices[8] = { 2,7,6 };
-	indices[9] = { 3,7,2 };
+	indices[24] = 2; indices[25] = 7; indices[26] = 6;
+	indices[27] = 3; indices[28] = 7; indices[29] = 2;
 
 	// Right
-	indices[10] = { 6,4,5 };
-	indices[11] = { 7,4,6 };
+	indices[30] = 6; indices[31] = 4; indices[32] = 5;
+	indices[33] = 7; indices[34] = 4; indices[35] = 6;
+
 
 	pMesh->SetVertices(vertices);
 	pMesh->SetIndices(indices);
+	pMesh->SetStride(sizeof(DiffusedVertex));
 
 	pMesh->Create(pd3dDevice, pd3dCommandList);
 
@@ -69,12 +68,10 @@ void MeshHelper::CreateCubeMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 }
 
 void MeshHelper::CreateWallMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
-	shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects, const XMFLOAT4& xmf4Color)
+	std::shared_ptr<Mesh<DiffusedVertex>> pMesh, float fWidth, float fHeight, float fDepth, int nSubRects, const XMFLOAT4& xmf4Color)
 {
 	std::vector<DiffusedVertex> vertices;
-	std::vector<Index> indices;
-
-	pMesh->SetStride(sizeof(DiffusedVertex));
+	std::vector<UINT> indices;
 
 	float fHalfWidth = fWidth * 0.5f;
 	float fHalfHeight = fHeight * 0.5f;
@@ -84,84 +81,126 @@ void MeshHelper::CreateWallMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 	float fCellDepth = fDepth * (1.0f / nSubRects);
 
 	int k = 0;
+
+	// Left
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth, -fHalfHeight + (i * fCellHeight),		-fHalfDepth + (j * fCellDepth) },xmf4Color });			// 0
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + (j * fCellDepth) }, xmf4Color });			// 1
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });	// 2
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });	// 3
-			
-			UINT lastVertexIndex = vertices.size();
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
+			UINT indexStart = vertices.size();
+
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + (j * fCellDepth) },RandomGenerator::GenerateRandomColor() });			// 0
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + (j * fCellDepth) }, RandomGenerator::GenerateRandomColor() });			// 1
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor() });	// 2
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{-fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor() });	// 3
+			// 3 -> 1 -> 0
+			// 2 -> 1 -> 3
+
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 0);
+			indices.push_back(indexStart + 1);
+
+			indices.push_back(indexStart + 2);
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 1);
 		}
 	}
 
-	shared_ptr<struct Polygon> pRightFace;
+	// Right
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + (i * fCellHeight),		-fHalfDepth + (j * fCellDepth) }, xmf4Color});
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + (i * fCellHeight),		-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
-			
-			UINT lastVertexIndex = vertices.size();
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
+			UINT indexStart = vertices.size();
+
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + (j * fCellDepth) }, RandomGenerator::GenerateRandomColor()});
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + (j * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + ((i + 1) * fCellHeight),	-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ +fHalfWidth, -fHalfHeight + (i * fCellHeight),			-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 0);
+
+			indices.push_back(indexStart + 2);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 3);
 		}
 	}
 
+	// Top
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),			+fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),		+fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),		+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color});
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),			+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color});
+			UINT indexStart = vertices.size();
 
-			UINT lastVertexIndex = vertices.size();
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		+fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	+fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor()});
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		+fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor()});
+
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 0);
+
+			indices.push_back(indexStart + 2);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 3);
 		}
 	}
 
+	// Bottom
 	for (int i = 0; i < nSubRects; i++){
 		for (int j = 0; j < nSubRects; j++){
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, xmf4Color });
+			UINT indexStart = vertices.size();
 
-			UINT lastVertexIndex = vertices.size();
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + (j * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight,	-fHalfDepth + ((j + 1) * fCellDepth) }, RandomGenerator::GenerateRandomColor() });
+
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 0);
+
+			indices.push_back(indexStart + 2);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 3);
 		}
 	}
 
+	// Front
 	for (int i = 0; i < nSubRects; i++) {
 		for (int j = 0; j < nSubRects; j++) {
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + (j * fCellHeight),		+fHalfDepth }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		+fHalfDepth }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth }, xmf4Color });
+			UINT indexStart = vertices.size();
 
-			UINT lastVertexIndex = vertices.size();
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + (j * fCellHeight),		+fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		+fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + ((j + 1) * fCellHeight), +fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 0);
+
+			indices.push_back(indexStart + 2);
+			indices.push_back(indexStart + 1);
+			indices.push_back(indexStart + 3);
 		}
 	}
 
-	shared_ptr<struct Polygon> pBackFace;
+	// Back
 	for (int i = 0; i < nSubRects; i++) {
 		for (int j = 0; j < nSubRects; j++) {
-			pBackFace = make_shared<struct Polygon>(4);
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + (j * fCellHeight),		-fHalfDepth }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		-fHalfDepth }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth }, xmf4Color });
-			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth }, xmf4Color });
+			UINT indexStart = vertices.size();
 
-			UINT lastVertexIndex = vertices.size();
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 3, lastVertexIndex - 2 });
-			indices.push_back(Index{ lastVertexIndex - 4, lastVertexIndex - 2, lastVertexIndex - 1 });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + (j * fCellHeight),		-fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + (j * fCellHeight),		-fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + ((i + 1) * fCellWidth),	-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+			vertices.push_back(DiffusedVertex{ XMFLOAT3{ -fHalfWidth + (i * fCellWidth),		-fHalfHeight + ((j + 1) * fCellHeight),	-fHalfDepth }, RandomGenerator::GenerateRandomColor() });
+
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 0);
+			indices.push_back(indexStart + 1);
+
+			indices.push_back(indexStart + 2);
+			indices.push_back(indexStart + 3);
+			indices.push_back(indexStart + 1);
 		}
 	}
 
@@ -169,6 +208,7 @@ void MeshHelper::CreateWallMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 	pMesh->SetVertices(vertices);
 	pMesh->SetIndices(indices);
 
+	pMesh->SetStride(sizeof(DiffusedVertex));
 	pMesh->Create(pd3dDevice, pd3dCommandList);
 
 
@@ -177,15 +217,16 @@ void MeshHelper::CreateWallMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 }
 
 BOOL MeshHelper::CreateMeshFromOBJFiles(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
-	shared_ptr<Mesh<DiffusedVertex>> pMesh, wstring_view wstrObjPath, const XMFLOAT4& xmf4Color)
+	std::shared_ptr<Mesh<DiffusedVertex>> pMesh, std::wstring_view wstrObjPath, const XMFLOAT4& xmf4Color)
 {
-	ifstream in{ wstrObjPath.data() };
+	std::ifstream in{ wstrObjPath.data() };
 
 	if (!in) return FALSE;
 
 	// 1. 파일에서 읽어옴
-	vector<XMFLOAT3> LoadedVertices;
-	vector<Index> LoadedIndices;
+	std::vector<XMFLOAT3> LoadedVertices;
+	std::vector<UINT> LoadedIndices;
+
 	std::string strRead{};
 	while (in >> strRead) {
 		if (strRead == "v") {
@@ -197,7 +238,9 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(ComPtr<ID3D12Device> pd3dDevice, ComPtr<
 		if (strRead == "f") {
 			UINT n1, n2, n3;
 			in >> n1 >> n2 >> n3;
-			LoadedIndices.push_back(Index{ n1, n2, n3 });
+			LoadedIndices.push_back(n1 - 1);
+			LoadedIndices.push_back(n2 - 1);
+			LoadedIndices.push_back(n3 - 1);
 		}
 	}
 
@@ -224,7 +267,7 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(ComPtr<ID3D12Device> pd3dDevice, ComPtr<
 
 
 	std::vector<DiffusedVertex> vertices;
-	std::vector<Index> indices;
+	std::vector<UINT> indices;
 
 	vertices.reserve(LoadedVertices.size());
 	for (const XMFLOAT3& xmf3Vertex : LoadedVertices) {
@@ -238,16 +281,14 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(ComPtr<ID3D12Device> pd3dDevice, ComPtr<
 	pMesh->SetVertices(vertices);
 	pMesh->SetIndices(indices);
 
-	pMesh->Create(pd3dDevice, pd3dCommandList);
-
 	pMesh->SetStride(sizeof(DiffusedVertex));
+	pMesh->Create(pd3dDevice, pd3dCommandList);
 
 	XMFLOAT3 xmf3ObbExtent = Vector3::Subtract(XMFLOAT3{ itNewMaxX->x, itNewMaxY->y, itNewMaxZ->z }, xmf3NewCenter);
 	pMesh->SetOBB(BoundingOrientedBox(xmf3NewCenter, xmf3ObbExtent, XMFLOAT4{ 0.f, 0.f, 0.f, 1.f }));
 }
 
-void GenerateRollercoasterPillarPolygon(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
-	shared_ptr<Mesh<DiffusedVertex>> pMesh, XMFLOAT3 xmf3TopPosition, float fWidth, float fDepth, const XMFLOAT4& xmf4Color)
+void GenerateRollercoasterPillarPolygon(std::vector<DiffusedVertex>& vertices, std::vector<UINT>& indices, XMFLOAT3 xmf3TopPosition, float fWidth, float fDepth, const XMFLOAT4& xmf4Color)
 {
 	XMFLOAT3 xmf3PillarCenter;
 	XMStoreFloat3(&xmf3PillarCenter, XMVectorMultiply(XMLoadFloat3(&xmf3TopPosition), XMVectorSet(1.0f, 0.5f, 1.0f, 0.0f)));
@@ -255,71 +296,171 @@ void GenerateRollercoasterPillarPolygon(ComPtr<ID3D12Device> pd3dDevice, ComPtr<
 	float fHalfWidth = fWidth * 0.5f;
 	float fHalfHeight = xmf3PillarCenter.y;
 	float fHalfDepth = fDepth * 0.5f;
+	{
+		UINT indexStart = vertices.size();
 
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth }, xmf4Color });
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth), RandomGenerator::GenerateRandomColor()));
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth), RandomGenerator::GenerateRandomColor()));
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth), RandomGenerator::GenerateRandomColor()));
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth), RandomGenerator::GenerateRandomColor()));
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth), RandomGenerator::GenerateRandomColor()));
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth), RandomGenerator::GenerateRandomColor()));
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth), RandomGenerator::GenerateRandomColor()));
+		vertices.push_back(DiffusedVertex(XMFLOAT3(xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth), RandomGenerator::GenerateRandomColor()));
 
-	UINT uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
 
+		// Front
+		indices.push_back(indexStart + 3); 
+		indices.push_back(indexStart + 1); 
+		indices.push_back(indexStart + 0);
+		indices.push_back(indexStart + 2); 
+		indices.push_back(indexStart + 1); 
+		indices.push_back(indexStart + 3);
 
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+		// Top
+		indices.push_back(indexStart + 0); 
+		indices.push_back(indexStart + 5); 
+		indices.push_back(indexStart + 4);
+		indices.push_back(indexStart + 1); 
+		indices.push_back(indexStart + 5);
+		indices.push_back(indexStart + 0);
 
-	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
+		// Back
+		indices.push_back(indexStart + 3); 
+		indices.push_back(indexStart + 4); 
+		indices.push_back(indexStart + 7);
+		indices.push_back(indexStart + 0); 
+		indices.push_back(indexStart + 4); 
+		indices.push_back(indexStart + 3);
 
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+		// Bottom
+		indices.push_back(indexStart + 1); 
+		indices.push_back(indexStart + 6); 
+		indices.push_back(indexStart + 5);
+		indices.push_back(indexStart + 2);
+		indices.push_back(indexStart + 6); 
+		indices.push_back(indexStart + 1);
 
-	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
+		// Left
+		indices.push_back(indexStart + 2); 
+		indices.push_back(indexStart + 7); 
+		indices.push_back(indexStart + 6);
+		indices.push_back(indexStart + 3); 
+		indices.push_back(indexStart + 7); 
+		indices.push_back(indexStart + 2);
 
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+		// Right
+		indices.push_back(indexStart + 6); 
+		indices.push_back(indexStart + 4); 
+		indices.push_back(indexStart + 5);
+		indices.push_back(indexStart + 7); 
+		indices.push_back(indexStart + 4); 
+		indices.push_back(indexStart + 6);
+	}
+}
+
+void GenerateRollercoasterRailCube(std::vector<DiffusedVertex>& vertices, std::vector<UINT>& indices,const XMFLOAT3& v0, const XMFLOAT3& v1, const XMFLOAT3& v2, const XMFLOAT3& v3)
+{
+	/*
+			  v1 ? ----------- ? v3
+				 |             |
+			p[i] ? ----------- ? p[i+1]
+				 |             |
+			  v0 ? ----------- ? v2
 	
-	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
+               v1                 v3
+			   + ---------------- +
+			  /|                / |
+		  v0 + +---------------+ v2
+             | |               |  |
+			 | |               |  |
+	       bv1 + ------------- +- +  bv3
+			 |/                | / 
+             + ----------------+
+		  bv0                 bv2
 
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x - fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
+	*/
 
-	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
 
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y + fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z + fHalfDepth}, xmf4Color });
-	pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ XMFLOAT3{ xmf3PillarCenter.x + fHalfWidth, xmf3PillarCenter.y - fHalfHeight, xmf3PillarCenter.z - fHalfDepth}, xmf4Color });
+	float fRailThickness = 3.f;
 
-	uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 4, uiLastVertexIdx - 3, uiLastVertexIdx - 1 });
-	pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 2, uiLastVertexIdx - 1 });
+	XMFLOAT3 xmf3BottomVertex0;
+	XMFLOAT3 xmf3BottomVertex1;
+	XMFLOAT3 xmf3BottomVertex2;
+	XMFLOAT3 xmf3BottomVertex3;
+
+	XMStoreFloat3(&xmf3BottomVertex0, XMVector3TransformCoord(XMLoadFloat3(&v0), XMMatrixTranslationFromVector(XMVectorScale(XMVectorSet(0.f, -1.f, 0.f, 1.f), fRailThickness))));
+	XMStoreFloat3(&xmf3BottomVertex1, XMVector3TransformCoord(XMLoadFloat3(&v1), XMMatrixTranslationFromVector(XMVectorScale(XMVectorSet(0.f, -1.f, 0.f, 1.f), fRailThickness))));
+	XMStoreFloat3(&xmf3BottomVertex2, XMVector3TransformCoord(XMLoadFloat3(&v2), XMMatrixTranslationFromVector(XMVectorScale(XMVectorSet(0.f, -1.f, 0.f, 1.f), fRailThickness))));
+	XMStoreFloat3(&xmf3BottomVertex3, XMVector3TransformCoord(XMLoadFloat3(&v3), XMMatrixTranslationFromVector(XMVectorScale(XMVectorSet(0.f, -1.f, 0.f, 1.f), fRailThickness))));
+
+	UINT indexStart = vertices.size();
+	vertices.push_back(DiffusedVertex{ v0, RandomGenerator::GenerateRandomColor() });
+	vertices.push_back(DiffusedVertex{ v1, RandomGenerator::GenerateRandomColor() });
+	vertices.push_back(DiffusedVertex{ v2, RandomGenerator::GenerateRandomColor() });
+	vertices.push_back(DiffusedVertex{ v3, RandomGenerator::GenerateRandomColor() });
+	vertices.push_back(DiffusedVertex{ xmf3BottomVertex0, RandomGenerator::GenerateRandomColor() });
+	vertices.push_back(DiffusedVertex{ xmf3BottomVertex1, RandomGenerator::GenerateRandomColor() });
+	vertices.push_back(DiffusedVertex{ xmf3BottomVertex2, RandomGenerator::GenerateRandomColor() });
+	vertices.push_back(DiffusedVertex{ xmf3BottomVertex3, RandomGenerator::GenerateRandomColor() });
+
+	// Front
+	indices.push_back(indexStart + 3);
+	indices.push_back(indexStart + 1);
+	indices.push_back(indexStart + 0);
+	indices.push_back(indexStart + 2);
+	indices.push_back(indexStart + 1);
+	indices.push_back(indexStart + 3);
+
+	// Top
+	indices.push_back(indexStart + 0);
+	indices.push_back(indexStart + 5);
+	indices.push_back(indexStart + 4);
+	indices.push_back(indexStart + 1);
+	indices.push_back(indexStart + 5);
+	indices.push_back(indexStart + 0);
+
+	// Back
+	indices.push_back(indexStart + 3);
+	indices.push_back(indexStart + 4);
+	indices.push_back(indexStart + 7);
+	indices.push_back(indexStart + 0);
+	indices.push_back(indexStart + 4);
+	indices.push_back(indexStart + 3);
+
+	// Bottom
+	indices.push_back(indexStart + 1);
+	indices.push_back(indexStart + 6);
+	indices.push_back(indexStart + 5);
+	indices.push_back(indexStart + 2);
+	indices.push_back(indexStart + 6);
+	indices.push_back(indexStart + 1);
+
+	// Left
+	indices.push_back(indexStart + 2);
+	indices.push_back(indexStart + 7);
+	indices.push_back(indexStart + 6);
+	indices.push_back(indexStart + 3);
+	indices.push_back(indexStart + 7);
+	indices.push_back(indexStart + 2);
+
+	// Right
+	indices.push_back(indexStart + 6);
+	indices.push_back(indexStart + 4);
+	indices.push_back(indexStart + 5);
+	indices.push_back(indexStart + 7);
+	indices.push_back(indexStart + 4);
+	indices.push_back(indexStart + 6);
 
 }
 
 void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
-	shared_ptr<Mesh<DiffusedVertex>> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute, float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias, const XMFLOAT4& xmf4Color)
+	std::shared_ptr<Mesh<DiffusedVertex>> pMesh, OUT std::vector<XMFLOAT3>& RollercoasterRoute, float fWidth, float fCourseRadius, int nControlPoints, int nInterpolateBias, const XMFLOAT4& xmf4Color)
 {
 	assert(nControlPoints != 0);
 
-	vector<XMFLOAT3> ControlPoints(nControlPoints);
-	vector<XMFLOAT3> Tangents(nControlPoints);
+	std::vector<XMFLOAT3> ControlPoints(nControlPoints);
+	std::vector<XMFLOAT3> Tangents(nControlPoints);
 	
 	// 1. 컨트롤 포인트 생성
 	auto GenerateControlPoint = [fCourseRadius, nControlPoints](int idx) {
@@ -341,7 +482,7 @@ void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, Co
 	XMStoreFloat3(&Tangents[nControlPoints - 1], XMVectorZero());
 
 	int count = 1;
-	for (auto& [v1, v2, v3] : ControlPoints | views::adjacent<3>) {
+	for (auto&& [v1, v2, v3] : ControlPoints | std::views::adjacent<3>) {
 		XMVECTOR xmvCP1 = XMLoadFloat3(&v1);
 		XMVECTOR xmvCP3 = XMLoadFloat3(&v3);
 
@@ -367,7 +508,7 @@ void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, Co
 
 	// 3. 스플라인 곡선의 점 구함
 
-	vector<XMFLOAT3> SplinePoints;
+	std::vector<XMFLOAT3> SplinePoints;
 
 	for (int i = 0; i < nControlPoints - 1; ++i) {
 		XMVECTOR xmvControlPoint1 = XMLoadFloat3(&ControlPoints[i]);
@@ -404,44 +545,45 @@ void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, Co
 		SP : SplinePoints
 		         SP[0]                      SP[1]                      SP[2]        
 		  ---------+--------------------------+--------------------------+----------
-		           |0                        3|0                        3|
-				   |1                        2|1                        2|
+		           |1                        3|0                        3|
+				   |0                        2|1                        2|
 		  ---------+--------------------------+--------------------------+----------
 
 
-
-		  v0 ? ----------- ? v3
-			 |             |
-		p[i] ? ----------- ? p[i+1]
-			 |             |
-		  v1 ? ----------- ? v2
-
-		  v0, v1 : normalize(cross(p[i] - p[i-1]), up)) 하여 방향을 찾고 너비만큼의 간격으로 점을 찾으면 됨 (+- 방향 * (width / 2))
-		  v2, v3 : normalize(cross(p[i+1] - p[i]), up)) 하여 방향을 찾고 적절한 너비만큼의 간격으로 점을 찾으면 됨 (+- 방향 * (width / 2))
+				                   v1            v3
+				     ? ----------- ? ----------- ?
+					 |             |             |
+			p[i-1]   ? ----------- ? p[i]	     ? p[i+1]
+					 |             |		     |
+				     ? ----------- ? ----------- ?
+					               v0            v2
+				  v0, v1 : normalize(cross(p[i] - p[i-1]), up)) 하여 방향을 찾고 너비만큼의 간격으로 점을 찾으면 됨 (+- 방향 * (width / 2))
+				  v2, v3 : normalize(cross(p[i+1] - p[i]), up)) 하여 방향을 찾고 적절한 너비만큼의 간격으로 점을 찾으면 됨 (+- 방향 * (width / 2))
 
 	*/
 
 	// 4. 레일
-	vector<shared_ptr<struct Polygon>> pPolygons;
+	std::vector<DiffusedVertex> vertices{};
+	std::vector<UINT> indices{};
+
 	for (int i = 1; i < SplinePoints.size() - 1; ++i) {
-		shared_ptr<struct Polygon> pRail = make_shared<struct Polygon>(4);
 		XMVECTOR xmvCurPoint = XMLoadFloat3(&SplinePoints[i]);
 		XMVECTOR xmvNextPoint = XMLoadFloat3(&SplinePoints[i + 1]);
 		XMVECTOR xmvPrevPoint = XMLoadFloat3(&SplinePoints[i - 1]);
 
 		// 현재 점 : 우 -> 좌 
-		XMVECTOR xmvCurRailDirection = XMVectorSubtract(xmvCurPoint, xmvPrevPoint);
+		XMVECTOR xmvCurRailDirection = XMVector3Normalize(XMVectorSubtract(xmvCurPoint, xmvPrevPoint));
 		XMVECTOR xmvCurRailUp = XMVectorSet(0.f, 1.f, 0.f, 0.f);
-		XMVECTOR xmvCurRailRight = XMVector3Normalize(XMVector3Cross(xmvCurRailDirection, xmvCurRailUp));
+		XMVECTOR xmvCurRailRight = XMVector3Normalize(XMVector3Cross(xmvCurRailUp, xmvCurRailDirection));
 		XMVECTOR xmvCurRailLeft = XMVector3Normalize(XMVectorScale(xmvCurRailRight, -1.f));
 
 		XMVECTOR xmvVertex1 = XMVector3TransformCoord(xmvCurPoint, XMMatrixTranslationFromVector(XMVectorScale(xmvCurRailLeft, fWidth / 2)));
 		XMVECTOR xmvVertex2 = XMVector3TransformCoord(xmvCurPoint, XMMatrixTranslationFromVector(XMVectorScale(xmvCurRailRight, fWidth / 2)));
 
 		// 다음 점 : 우 -> 좌 
-		XMVECTOR xmvNextRailDirection = XMVectorSubtract(xmvNextPoint, xmvCurPoint);
+		XMVECTOR xmvNextRailDirection = XMVector3Normalize(XMVectorSubtract(xmvNextPoint, xmvCurPoint));
 		XMVECTOR xmvNextRailUp = XMVectorSet(0.f, 1.f, 0.f, 0.f);
-		XMVECTOR xmvNextRailRight = XMVector3Normalize(XMVector3Cross(xmvNextRailDirection, xmvNextRailUp));
+		XMVECTOR xmvNextRailRight = XMVector3Normalize(XMVector3Cross(xmvNextRailUp, xmvNextRailDirection));
 		XMVECTOR xmvNextRailLeft = XMVector3Normalize(XMVectorScale(xmvNextRailRight, -1.f));
 
 		XMVECTOR xmvVertex3 = XMVector3TransformCoord(xmvNextPoint, XMMatrixTranslationFromVector(XMVectorScale(xmvNextRailRight, fWidth / 2)));
@@ -456,55 +598,25 @@ void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, Co
 		XMStoreFloat3(&xmf3Vertex3, xmvVertex3);
 		XMStoreFloat3(&xmf3Vertex4, xmvVertex4);
 
-		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex1, xmf4Color });
-		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex2, xmf4Color });
-		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex3, xmf4Color });
-		pMesh->m_xmf3Vertices.push_back(DiffusedVertex{ xmf3Vertex4, xmf4Color });
+		GenerateRollercoasterRailCube(vertices, indices, xmf3Vertex1, xmf3Vertex2, xmf3Vertex3, xmf3Vertex4);
 
-		UINT uiLastVertexIdx = pMesh->m_xmf3Vertices.size();
-		pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 4, uiLastVertexIdx - 1 });
-		pMesh->m_uiIndices.push_back(Index{ uiLastVertexIdx - 3, uiLastVertexIdx - 1, uiLastVertexIdx - 2 });
 	}
 
 	// 5. 기둥
 	for (int i = 1; i < nControlPoints; ++i) {
-		int nPillarIndex = i * nInterpolateBias * 2;
-		GenerateRollercoasterPillarPolygon(pd3dDevice, pd3dCommandList, pMesh, pMesh->m_xmf3Vertices[pMesh->m_uiIndices[nPillarIndex][0]].m_xmf3Position, 0.5f, 0.5f, xmf4Color);
-		GenerateRollercoasterPillarPolygon(pd3dDevice, pd3dCommandList, pMesh, pMesh->m_xmf3Vertices[pMesh->m_uiIndices[nPillarIndex][1]].m_xmf3Position, 0.5f, 0.5f, xmf4Color);
+		int nPillarIndex = ((i * nInterpolateBias) * 36);
+		GenerateRollercoasterPillarPolygon(vertices, indices, vertices[indices[nPillarIndex]].m_xmf3Position, 0.5f, 0.5f, xmf4Color);
+		GenerateRollercoasterPillarPolygon(vertices, indices, vertices[indices[nPillarIndex + 3]].m_xmf3Position, 0.5f, 0.5f, xmf4Color);
 	}
 
 
-	pMesh->m_pd3dVertexBuffer = ::CreateBufferResources(
-		pd3dDevice, 
-		pd3dCommandList, 
-		pMesh->m_xmf3Vertices.data(),
-		pMesh->m_nStride * pMesh->m_xmf3Vertices.size(), 
-		D3D12_HEAP_TYPE_DEFAULT, 
-		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, 
-		&pMesh->m_pd3dVertexUploadBuffer);
+	pMesh->SetVertices(vertices);
+	pMesh->SetIndices(indices);
+	pMesh->SetStride(sizeof(DiffusedVertex));
+	pMesh->Create(pd3dDevice, pd3dCommandList);
 
-	pMesh->m_d3dVertexBufferView.BufferLocation = pMesh->m_pd3dVertexBuffer->GetGPUVirtualAddress();
-	pMesh->m_d3dVertexBufferView.StrideInBytes = pMesh->m_nStride;
-	pMesh->m_d3dVertexBufferView.SizeInBytes = pMesh->m_nStride * pMesh->m_xmf3Vertices.size();
-
-	pMesh->m_pd3dIndexBuffer = ::CreateBufferResources(
-		pd3dDevice,
-		pd3dCommandList,
-		pMesh->m_uiIndices.data(),
-		sizeof(UINT) * (pMesh->m_uiIndices.size() * 3),
-		D3D12_HEAP_TYPE_DEFAULT,
-		D3D12_RESOURCE_STATE_INDEX_BUFFER,
-		&pMesh->m_pd3dIndexUploadBuffer
-	);
-
-	pMesh->m_d3dIndexBufferView.BufferLocation = pMesh->m_pd3dIndexBuffer->GetGPUVirtualAddress();
-	pMesh->m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	pMesh->m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * (pMesh->m_uiIndices.size() * 3);
-
-	pMesh->m_xmOBB = BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fCourseRadius, fCourseRadius, fCourseRadius), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	pMesh->SetOBB(BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fCourseRadius, fCourseRadius, fCourseRadius), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
 
 	RollercoasterRoute.assign(SplinePoints.begin(), SplinePoints.end());
 
-	pMesh->m_nStride = sizeof(DiffusedVertex);
-	pMesh->m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 }

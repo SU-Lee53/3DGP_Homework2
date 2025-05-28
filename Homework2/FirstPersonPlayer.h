@@ -8,7 +8,7 @@ public:
 	virtual ~FirstPersonPlayer();
 
 public:
-	virtual void Initialize() override;
+	virtual void Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 	virtual void Update(float fTimeElapsed) override;
 
 public:

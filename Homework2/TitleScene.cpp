@@ -21,19 +21,24 @@ void TitleScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Grap
 	m_pObjects[0]->SetMesh(p3DGPMesh);
 	m_pObjects[0]->GetTransform()->SetPosition(0.f, 10.f, 70.f);
 	m_pObjects[0]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
+	m_pObjects[0]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[0]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 	m_pObjects[1] = make_shared<ExplosiveObject>();
 	m_pObjects[1]->SetColor(RGB(255, 0, 0));
 	m_pObjects[1]->SetMesh(pNameMesh);
 	m_pObjects[1]->GetTransform()->SetPosition(25.f, -10.f, 70.f);
 	m_pObjects[1]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
+	m_pObjects[1]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[1]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	
 	static_pointer_cast<ExplosiveObject>(m_pObjects[1])->SetAutoReset(FALSE);
 	
 	m_pPlayer = make_shared<FirstPersonPlayer>();
-	m_pPlayer->Initialize();
+	m_pPlayer->Initialize(pd3dDevice, pd3dCommandList);
 	m_pPlayer->GetTransform()->SetPosition(0.f, 0.f, 0.f);
 
-	ExplosiveObject::PrepareExplosion();
+	ExplosiveObject::PrepareExplosion(pd3dDevice, pd3dCommandList);
 }
 
 void TitleScene::ReleaseObjects()
@@ -44,7 +49,7 @@ void TitleScene::ReleaseObjects()
 void TitleScene::Update(float fTimeElapsed)
 {
 	if (static_pointer_cast<ExplosiveObject>(m_pObjects[1])->IsExploded()) {
-		GameFramework::ChangeScene(TAG_SCENE_MENU);
+		GameFramework::SignalChangeScene(TAG_SCENE_MENU);
 		return;
 	}
 
@@ -66,9 +71,9 @@ void TitleScene::Update(float fTimeElapsed)
 	}
 }
 
-void TitleScene::Render()
+void TitleScene::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	Scene::Render();
+	Scene::Render(pd3dCommandList);
 }
 
 void TitleScene::ProcessMouseInput(float fTimeElapsed)

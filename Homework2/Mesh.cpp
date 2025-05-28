@@ -3,12 +3,6 @@
 
 using namespace std;
 
-BOOL ReyIntersectionBtTriangle(const XMVECTOR& xmvRayOrigin, const XMVECTOR& xmvRayDirection,
-	const XMVECTOR& v0, const XMVECTOR& v1, const XMVECTOR& v2, float& fNearHitDistance)
-{
-
-}
-
 BOOL Mesh_Base::RayIntersectionByTriangle(const XMVECTOR& xmvRayOrigin, const XMVECTOR& xmvRayDirection, const XMVECTOR& v0, const XMVECTOR& v1, const XMVECTOR& v2, float& fNearHitDistance)
 {
 	float fHitDistance;
@@ -16,4 +10,6 @@ BOOL Mesh_Base::RayIntersectionByTriangle(const XMVECTOR& xmvRayOrigin, const XM
 	if (bIntersected && (fHitDistance < fNearHitDistance)) {
 		fNearHitDistance = fHitDistance;
 	}
+
+	return bIntersected;
 }

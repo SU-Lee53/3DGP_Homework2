@@ -43,7 +43,7 @@ void Player::SetCameraOffset(const XMFLOAT3& xmf3CameraOffset)
 	m_pCamera->SetLookAt(Vector3::Add(m_pTransform->GetPosition(), m_xmf3CameraOffset), m_pTransform->GetPosition(), m_pTransform->GetUp());
 }
 
-void Player::Initialize()
+void Player::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 }
 
@@ -61,9 +61,14 @@ void Player::Update(float fElapsedTime)
 	GameObject::Update(fElapsedTime);
 }
 
-void Player::Render(HDC hDCFrameBuffer, std::shared_ptr<Camera> pCamera)
+void Player::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Camera> pCamera)
 {
-	GameObject::Render(hDCFrameBuffer, pCamera);
+	GameObject::Render(pd3dCommandList, pCamera);
+}
+
+void Player::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+{
+	GameObject::Render(pd3dCommandList, m_pCamera);
 }
 
 void Player::UpdatePlayerCamera(float fTimeElapsed)

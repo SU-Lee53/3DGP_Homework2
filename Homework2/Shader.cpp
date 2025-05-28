@@ -81,8 +81,6 @@ D3D12_DEPTH_STENCIL_DESC Shader::CreateDepthStencilState()
 void Shader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	CreateRootSignature(pd3dDevice);
-	CreateVertexShader();
-	CreatePixelShader();
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC d3dPipelineStateDesc;
 	::ZeroMemory(&d3dPipelineStateDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -102,7 +100,11 @@ void Shader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphics
 		d3dPipelineStateDesc.SampleDesc.Count = 1;
 		d3dPipelineStateDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 	}
-	pd3dDevice->CreateGraphicsPipelineState(&d3dPipelineStateDesc, IID_PPV_ARGS(m_pd3dPipelineState.GetAddressOf()));
+	HRESULT hr = pd3dDevice->CreateGraphicsPipelineState(&d3dPipelineStateDesc, IID_PPV_ARGS(m_pd3dPipelineState.GetAddressOf()));
+
+	if (FAILED(hr)) {
+		::SHOW_ERROR("Create Pipeline Failed");
+	}
 
 }
 
@@ -116,13 +118,6 @@ void Shader::CompileShaderFromFile(std::wstring_view wstrFileName, std::string_v
 	ComPtr<ID3DBlob> pShaderBlob = nullptr;
 	ComPtr<ID3DBlob> pErrorBlob = nullptr;
 
-	if (strShaderProfile.contains("vs")) {
-		pShaderBlob = m_pVSBlob;
-	}
-	else if (strShaderProfile.contains("ps")) {
-		pShaderBlob = m_pPSBlob;
-	}
-
 	HRESULT hr = ::D3DCompileFromFile(wstrFileName.data(), NULL, NULL, strShaderName.data(), strShaderProfile.data(), nCompileFlags, 0, pShaderBlob.GetAddressOf(), pErrorBlob.GetAddressOf());
 
 	if (FAILED(hr))
@@ -133,6 +128,14 @@ void Shader::CompileShaderFromFile(std::wstring_view wstrFileName, std::string_v
 			__debugbreak();
 		}
 	}
+
+	if (strShaderProfile.contains("vs")) {
+		m_pVSBlob = pShaderBlob;
+	}
+	else if (strShaderProfile.contains("ps")) {
+		m_pPSBlob = pShaderBlob;
+	}
+
 }
 
 ////////////////////
@@ -182,7 +185,10 @@ void DiffusedShader::CreatePixelShader()
 
 void DiffusedShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	CreateVertexShader();
+	CreatePixelShader();
 	Shader::CreateShader(pd3dDevice, pd3dCommandList);
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
 void DiffusedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice)
@@ -236,17 +242,10 @@ void DiffusedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice)
 
 void DiffusedShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	m_upConstantBuffer = std::make_unique<ConstantBuffer<VS_TRANSFORM_DATA>>(pd3dDevice, pd3dCommandList);
 }
 
 void DiffusedShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas)
 {
-	assert(nDatas != 1);
-
-	VS_TRANSFORM_DATA* pTransfromData = static_cast<VS_TRANSFORM_DATA*>(pData);
-	m_upConstantBuffer->UpdateData(pTransfromData);
-
-	m_upConstantBuffer->SetBufferToPipeline(pd3dCommandList, 1);
 }
 
 void DiffusedShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
@@ -257,9 +256,42 @@ void DiffusedShader::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, C
 {
 }
 
-////////////////////
-// DiffusedShader // 
-////////////////////
+/////////////////////
+// WireframeShader // 
+/////////////////////
+
+WireframeShader::WireframeShader()
+{
+}
+
+WireframeShader::~WireframeShader()
+{
+}
+
+D3D12_RASTERIZER_DESC WireframeShader::CreateRasterizerState()
+{
+	D3D12_RASTERIZER_DESC d3dRasterizerDesc;
+	::ZeroMemory(&d3dRasterizerDesc, sizeof(D3D12_RASTERIZER_DESC));
+	{
+		d3dRasterizerDesc.FillMode = D3D12_FILL_MODE_WIREFRAME;
+		d3dRasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+		d3dRasterizerDesc.FrontCounterClockwise = FALSE;
+		d3dRasterizerDesc.DepthBias = 0;
+		d3dRasterizerDesc.DepthBiasClamp = 0.0f;
+		d3dRasterizerDesc.SlopeScaledDepthBias = 0.0f;
+		d3dRasterizerDesc.DepthClipEnable = TRUE;
+		d3dRasterizerDesc.MultisampleEnable = FALSE;
+		d3dRasterizerDesc.AntialiasedLineEnable = FALSE;
+		d3dRasterizerDesc.ForcedSampleCount = 0;
+		d3dRasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+	}
+
+	return d3dRasterizerDesc;
+}
+
+/////////////////////
+// InstancedShader // 
+/////////////////////
 
 InstancedShader::InstancedShader()
 {
@@ -304,6 +336,8 @@ void InstancedShader::CreatePixelShader()
 
 void InstancedShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	CreateVertexShader();
+	CreatePixelShader();
 	Shader::CreateShader(pd3dDevice, pd3dCommandList);
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
@@ -359,11 +393,13 @@ void InstancedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice)
 void InstancedShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	// 인스턴싱 최대 50개까지
-	m_upStructuredBuffer = std::make_unique<StructuredBuffer<VS_TRANSFORM_DATA>>(pd3dDevice, pd3dCommandList, 50);
+	m_upStructuredBuffer = std::make_unique<StructuredBuffer<VS_INSTANCING_DATA>>(pd3dDevice, pd3dCommandList, 250);
 }
 
 void InstancedShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas)
 {
+	m_upStructuredBuffer->UpdateData((VS_INSTANCING_DATA*)pData, 0, nDatas);
+	m_upStructuredBuffer->SetBufferToPipeline(pd3dCommandList, 1);
 }
 
 void InstancedShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)

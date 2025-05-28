@@ -63,10 +63,10 @@ void TankObject::Move(const XMFLOAT3& xmf3Shift)
 
 }
 
-void TankObject::Initialize()
+void TankObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	shared_ptr<Mesh> pTankMesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pTankMesh, L"../Resources/Tank.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTankMesh, L"../Resources/Tank.obj", XMFLOAT4{1.f, 0.f, 0.f, 1.f});
 	SetMesh(pTankMesh);
 	SetColor(RGB(255, 0, 0));
 	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
@@ -103,9 +103,9 @@ void TankObject::Update(float fElapsedTime)
 	ExplosiveObject::Update(fElapsedTime);
 }
 
-void TankObject::Render(HDC hDCFrameBuffer, std::shared_ptr<class Camera> pCamera)
+void TankObject::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<class Camera> pCamera)
 {
-	ExplosiveObject::Render(hDCFrameBuffer, pCamera);
+	ExplosiveObject::Render(pd3dCommandList, pCamera);
 }
 
 void TankObject::BeginCollision(std::shared_ptr<GameObject> pOther)

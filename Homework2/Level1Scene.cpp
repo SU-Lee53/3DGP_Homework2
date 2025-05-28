@@ -10,27 +10,19 @@ void Level1Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 	m_bSceneChanged = FALSE;
 
 	std::vector<XMFLOAT3> RollercoasterRoutes = {};
-	shared_ptr<Mesh> pRollercoasterMesh = make_shared<Mesh>();
-	MeshHelper::CreateRollercoasterRailMesh(pRollercoasterMesh, m_xmf3MoveRoutes, 10.0f, 150.0f, 30, 5);
+	shared_ptr<Mesh<DiffusedVertex>> pRollercoasterMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateRollercoasterRailMesh(pd3dDevice, pd3dCommandList, pRollercoasterMesh, m_xmf3MoveRoutes, 10.0f, 150.0f, 30, 5);
 
-	shared_ptr<Mesh> pCubeMesh = make_shared<Mesh>();
-	MeshHelper::CreateCubeMesh(pCubeMesh);
-	
-	shared_ptr<Mesh> pAxis = make_shared<AxisMesh>();
-
-	m_pObjects.resize(2);
+	m_pObjects.resize(1);
 	m_pObjects[0] = make_shared<GameObject>();
 	m_pObjects[0]->SetColor(RGB(0,0,0));
 	m_pObjects[0]->SetMesh(pRollercoasterMesh);
 	m_pObjects[0]->GetTransform()->SetPosition(0.f, 0.f, 0.f);
+	m_pObjects[0]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[0]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-	m_pObjects[1] = make_shared<GameObject>();
-	m_pObjects[1]->SetColor(RGB(255, 0, 0));
-	m_pObjects[1]->SetMesh(pAxis);
-	m_pObjects[1]->GetTransform()->SetPosition(0.f, 0.f, 0.0f);
-	
 	m_pPlayer = make_shared<FirstPersonPlayer>();
-	m_pPlayer->Initialize();
+	m_pPlayer->Initialize(pd3dDevice, pd3dCommandList);
 	m_pPlayer->GetTransform()->SetPosition(0.f, 0.f, 0.f);
 }
 
@@ -58,7 +50,7 @@ void Level1Scene::Update(float fTimeElapsed)
 
 	if (m_bPlayerRide) UpdatePlayerRide(fTimeElapsed);
 	if (m_bRollercoasterEnd) {
-		GameFramework::ChangeScene(TAG_SCENE_LEVEL2);
+		GameFramework::SignalChangeScene(TAG_SCENE_LEVEL2);
 		m_bSceneChanged = TRUE;
 		return;
 	}
@@ -72,8 +64,9 @@ void Level1Scene::Update(float fTimeElapsed)
 
 }
 
-void Level1Scene::Render()
+void Level1Scene::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	Scene::Render(pd3dCommandList);
 }
 
 void Level1Scene::ProcessMouseInput(float fTimeElapsed)
@@ -89,7 +82,7 @@ void Level1Scene::ProcessKeyboardInput(float fTimeElapsed)
 	}
 	
 	if (INPUT.GetButtonDown('N')) {
-		GameFramework::ChangeScene(TAG_SCENE_LEVEL2);
+		GameFramework::SignalChangeScene(TAG_SCENE_LEVEL2);
 		m_bSceneChanged = TRUE;
 		return;
 	}
@@ -117,7 +110,7 @@ void Level1Scene::ProcessKeyboardInput(float fTimeElapsed)
 
 
 	if (INPUT.GetButtonDown(VK_ESCAPE)) {
-		GameFramework::ChangeScene(TAG_SCENE_MENU);
+		GameFramework::SignalChangeScene(TAG_SCENE_MENU);
 		return;
 	}
 }

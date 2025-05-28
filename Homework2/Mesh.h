@@ -1,5 +1,4 @@
 #pragma once
-#include "VertexType.h"
 
 
 class Mesh_Base {
@@ -15,11 +14,11 @@ public:
 	BOOL RayIntersectionByTriangle(const XMVECTOR& xmvRayOrigin, const XMVECTOR& xmvRayDirection,
 		const XMVECTOR& v0, const XMVECTOR& v1, const XMVECTOR& v2, float& fNearHitDistance);
 
-	virtual int CheckRayIntersection(const XMVECTOR& xmvPickRayOrigin, const XMVECTOR& xmvPickRayDirection, float& fNearHitDistance) {}
+	virtual int CheckRayIntersection(const XMVECTOR& xmvPickRayOrigin, const XMVECTOR& xmvPickRayDirection, float& fNearHitDistance) { __debugbreak(); return 0; }
 
 	virtual void ReleaseUploadBuffers() {};
 
-	BoundingOrientedBox& SetOBB(const BoundingOrientedBox& obb) { m_xmOBB = obb; }
+	BoundingOrientedBox& SetOBB(const BoundingOrientedBox& obb) { return m_xmOBB = obb; }
 	BoundingOrientedBox& GetOBB() { return m_xmOBB; }
 
 protected:
@@ -27,7 +26,7 @@ protected:
 
 };
 
-template<typename T>
+template<VertexType T>
 class Mesh : public Mesh_Base {
 public:
 	Mesh() {}
@@ -40,10 +39,10 @@ public:
 		std::copy(vertices.begin(), vertices.end(), std::back_inserter(m_Vertices));
 	}
 
-	void SetIndices(std::span<Index> indices) {
-		m_uiIndices.clear();
-		m_uiIndices.reserve(indices.size());
-		std::copy(indices.begin(), indices.end(), std::back_inserter(m_uiIndices));
+	void SetIndices(std::span<UINT> indices) {
+		m_Indices.clear();
+		m_Indices.reserve(indices.size());
+		std::copy(indices.begin(), indices.end(), std::back_inserter(m_Indices));
 	}
 
 	void SetSlot(UINT nSlot) { m_nSlot = nSlot; }
@@ -52,8 +51,6 @@ public:
 	
 	void SetStartIndex(UINT nIndex) { m_nStartIndex = nIndex; }
 	void SetBaseVertex(UINT nBase) { m_nBaseVertex = nBase; }
-
-	void CreateVertexBuffer();
 
 
 	void Create(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
@@ -69,7 +66,7 @@ protected:
 	ComPtr<ID3D12Resource>	m_pd3dVertexBuffer = nullptr;
 	ComPtr<ID3D12Resource>	m_pd3dVertexUploadBuffer = nullptr;
 
-	std::vector<Index>		m_uiIndices = {};
+	std::vector<UINT>		m_Indices = {};
 	ComPtr<ID3D12Resource>	m_pd3dIndexBuffer = nullptr;
 	ComPtr<ID3D12Resource>	m_pd3dIndexUploadBuffer = nullptr;
 
@@ -87,7 +84,7 @@ protected:
 
 };
 
-template<typename T>
+template<VertexType T>
 void Mesh<T>::ReleaseUploadBuffers()
 {
 	// Destroy upload buffer for vertex buffer
@@ -98,14 +95,21 @@ void Mesh<T>::ReleaseUploadBuffers()
 	m_pd3dIndexUploadBuffer = nullptr;
 }
 
-template<typename T>
+template<VertexType T>
 void Mesh<T>::Create(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	assert(!m_Vertices.empty());
 
 	// Vertex Buffer + Vertex Buffer View
-	m_pd3dVertexBuffer = ::CreateBufferResources(pd3dDevice, pd3dCommandList, (void*)m_Vertices.data(), m_nStride * m_Vertices.size(),
-		D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, m_pd3dVertexUploadBuffer.GetAddressOf());
+	m_pd3dVertexBuffer = ::CreateBufferResources(
+		pd3dDevice, 
+		pd3dCommandList, 
+		(void*)m_Vertices.data(),
+		m_nStride * m_Vertices.size(),
+		D3D12_HEAP_TYPE_DEFAULT, 
+		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+		m_pd3dVertexUploadBuffer.GetAddressOf()
+	);
 
 	m_d3dVertexBufferView.BufferLocation = m_pd3dVertexBuffer->GetGPUVirtualAddress();
 	m_d3dVertexBufferView.StrideInBytes = m_nStride;
@@ -115,19 +119,19 @@ void Mesh<T>::Create(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsComma
 	m_pd3dIndexBuffer = ::CreateBufferResources(
 		pd3dDevice,
 		pd3dCommandList,
-		(void*)m_uiIndices.data(),
-		sizeof(UINT) * m_uiIndices.size(),
+		(void*)m_Indices.data(),
+		sizeof(UINT) * m_Indices.size(),
 		D3D12_HEAP_TYPE_DEFAULT,
 		D3D12_RESOURCE_STATE_INDEX_BUFFER,
-		&m_pd3dIndexUploadBuffer
+		m_pd3dIndexUploadBuffer.GetAddressOf()
 	);
 
 	m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
 	m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_uiIndices.size();
+	m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_Indices.size();
 }
 
-template<typename T>
+template<VertexType T>
 void Mesh<T>::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	// Set Mesh's primitive topology
@@ -137,37 +141,37 @@ void Mesh<T>::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 
 	if (m_pd3dIndexBuffer) {
 		pd3dCommandList->IASetIndexBuffer(&m_d3dIndexBufferView);
-		pd3dCommandList->DrawIndexedInstanced(m_uiIndices.size(), 1, 0, 0, 0);
+		pd3dCommandList->DrawIndexedInstanced(m_Indices.size(), 1, 0, 0, 0);
 	}
 	else {
 		pd3dCommandList->DrawInstanced(m_Vertices.size(), 1, m_nOffset, 0);
 	}
 }
 
-template<typename T>
+template<VertexType T>
 void Mesh<T>::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, UINT nInstances)
 {
 	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, &m_d3dVertexBufferView);
 	if (m_pd3dIndexBuffer) {
 		pd3dCommandList->IASetIndexBuffer(&m_d3dIndexBufferView);
-		pd3dCommandList->DrawIndexedInstanced(m_uiIndices.size(), nInstances, 0, 0, 0);
+		pd3dCommandList->DrawIndexedInstanced(m_Indices.size(), nInstances, 0, 0, 0);
 	}
 	else {
 		pd3dCommandList->DrawInstanced(m_Vertices.size(), nInstances, m_nOffset, 0);
 	}
 }
 
-template<typename T>
+template<VertexType T>
 int Mesh<T>::CheckRayIntersection(const XMVECTOR& xmvPickRayOrigin, const XMVECTOR& xmvPickRayDirection, float& fNearHitDistance)
 {
 	int nIntersections = 0;
 	bool bIntersected = m_xmOBB.Intersects(xmvPickRayOrigin, xmvPickRayDirection, fNearHitDistance);
 
-	for (auto polygon : m_uiIndices | std::views::chunk(3)) {
-		XMVECTOR v0 = XMLoadFloat3(&m_Vertices[polygon[0]]);
-		XMVECTOR v1 = XMLoadFloat3(&m_Vertices[polygon[1]]);
-		XMVECTOR v2 = XMLoadFloat3(&m_Vertices[polygon[2]]);
+	for (const auto& polygon : m_Indices | std::views::chunk(3)) {
+		XMVECTOR v0 = XMLoadFloat3(&m_Vertices[polygon[0]].m_xmf3Position);
+		XMVECTOR v1 = XMLoadFloat3(&m_Vertices[polygon[1]].m_xmf3Position);
+		XMVECTOR v2 = XMLoadFloat3(&m_Vertices[polygon[2]].m_xmf3Position);
 		BOOL bIntersected = RayIntersectionByTriangle(xmvPickRayOrigin, xmvPickRayDirection, v0, v1, v2, fNearHitDistance);
 		if (bIntersected) nIntersections++;
 	}

@@ -4,12 +4,12 @@
 #include "MenuScene.h"
 #include "Level1Scene.h"
 #include "Level2Scene.h"
+#include "Player.h"
 
 using namespace std;
 
-std::shared_ptr<Scene> GameFramework::m_pCurrentScene = nullptr;
-std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> GameFramework::m_pScenes = {};
 TAG_SCENE_NAME GameFramework::m_eCurrentSceneTag = TAG_SCENE_UNDEFINED;
+TAG_SCENE_NAME GameFramework::m_eNextSceneTag = TAG_SCENE_UNDEFINED;
 
 GameFramework::GameFramework()
 {
@@ -33,6 +33,8 @@ void GameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd, bool bEnableDeb
 	RENDER.OnCreate();
 	SHADER.OnCreate(m_pd3dDevice, m_pd3dCommandList);
 
+	BuildObjects();
+
 	_tcscpy_s(m_pszFrameRate, _T("LabProject ("));
 }
 
@@ -43,10 +45,16 @@ void GameFramework::OnDestroy()
 
 void GameFramework::Update()
 {
+	if (m_eCurrentSceneTag != m_eNextSceneTag) {
+		ChangeScene(m_eNextSceneTag);
+	}
+
 	m_GameTimer.Tick(0.0f);
 	INPUT.Update();
 
 	ProcessInput();
+
+	AnimateObjects();
 
 }
 
@@ -60,6 +68,8 @@ void GameFramework::Render()
 
 	RenderEnd();
 	Present();
+
+	MoveToNextFrame();
 
 	m_GameTimer.GetFrameRate(m_pszFrameRate + 12, 37);
 	::SetWindowText(m_hWnd, m_pszFrameRate);
@@ -77,11 +87,16 @@ void GameFramework::MoveToNextFrame()
 		::WaitForSingleObject(m_hFenceEvent, INFINITE);
 	}
 
+	if (FAILED(hr)) __debugbreak();
+
 }
 
 void GameFramework::BuildObjects()
 {
 	// Build Scenes
+
+	m_pd3dCommandList->Reset(m_pd3dCommandAllocator.Get(), NULL);
+
 	{
 		m_pScenes[TAG_SCENE_TITLE] = make_shared<TitleScene>();
 		m_pScenes[TAG_SCENE_MENU] = make_shared<MenuScene>();
@@ -89,9 +104,16 @@ void GameFramework::BuildObjects()
 		m_pScenes[TAG_SCENE_LEVEL2] = make_shared<Level2Scene>();
 
 		m_eCurrentSceneTag = TAG_SCENE_TITLE;
+		m_eNextSceneTag = TAG_SCENE_TITLE;
 		m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
-		m_pCurrentScene->BuildObjects();
+		m_pCurrentScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 	}
+
+	m_pd3dCommandList->Close();
+	ID3D12CommandList* ppd3dCommandLists[] = { m_pd3dCommandList.Get() };
+	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);
+
+	WaitForGPUComplete();
 
 }
 
@@ -101,6 +123,10 @@ void GameFramework::ReleaseObjects()
 
 BOOL GameFramework::ChangeScene(TAG_SCENE_NAME eTargetSceneTag)
 {
+	WaitForGPUComplete();
+
+
+
 	if (!INPUT.IsCursorShown()) {
 		INPUT.ShowCursor();
 	}
@@ -108,20 +134,49 @@ BOOL GameFramework::ChangeScene(TAG_SCENE_NAME eTargetSceneTag)
 	m_pCurrentScene->ReleaseObjects();
 	m_pCurrentScene.reset();
 
-	m_eCurrentSceneTag = eTargetSceneTag;
-	m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
-	m_pCurrentScene->BuildObjects();
+	m_pd3dCommandList->Reset(m_pd3dCommandAllocator.Get(), NULL);
+
+	{
+		m_eCurrentSceneTag = eTargetSceneTag;
+		m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
+		m_pCurrentScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+
+		m_eCurrentSceneTag = m_eNextSceneTag;
+	}
+
+	m_pd3dCommandList->Close();
+	ID3D12CommandList* ppd3dCommandLists[] = { m_pd3dCommandList.Get() };
+	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);
+
+	WaitForGPUComplete();
 
 	return TRUE;
 }
 
+void GameFramework::SignalChangeScene(TAG_SCENE_NAME eTargetSceneTag)
+{
+	m_eNextSceneTag = eTargetSceneTag;
+}
+
 BOOL GameFramework::ResetScene()
 {
-	m_pCurrentScene->ReleaseObjects();
-	m_pCurrentScene.reset();
+	WaitForGPUComplete();
 
-	m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
-	m_pCurrentScene->BuildObjects();
+	{
+		m_pd3dCommandList->Reset(m_pd3dCommandAllocator.Get(), NULL);
+
+		m_pCurrentScene->ReleaseObjects();
+		m_pCurrentScene.reset();
+
+		m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
+		m_pCurrentScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
+	}
+
+	m_pd3dCommandList->Close();
+	ID3D12CommandList* ppd3dCommandLists[] = { m_pd3dCommandList.Get() };
+	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);
+
+	WaitForGPUComplete();
 
 	return TRUE;
 }
@@ -248,7 +303,7 @@ void GameFramework::CreateSwapChain()
 		dxgiSwapChainDesc.Windowed = TRUE;
 
 		/// Set backbuffer resolution as fullscreen resolution.
-		dxgiSwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH | DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+		dxgiSwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	}
 
 	ComPtr<IDXGISwapChain> pSwapChain;
@@ -452,6 +507,14 @@ void GameFramework::ProcessInput()
 
 }
 
+void GameFramework::AnimateObjects()
+{
+	float fTimeElapsed = m_GameTimer.GetTimeElapsed();
+	if (m_pCurrentScene) {
+		m_pCurrentScene->Update(fTimeElapsed);
+	}
+}
+
 void GameFramework::RenderBegin()
 {
 	HRESULT hr;
@@ -481,17 +544,11 @@ void GameFramework::RenderBegin()
 
 	m_pd3dCommandList->OMSetRenderTargets(1, &d3dRTVCPUDescriptorHandle, TRUE, &d3dDSVDescriptorHandle);
 
-	float pfClearColor[4] = { 0.f, 0.0f, 0.0f, 1.0f };
+	float pfClearColor[4] = { 1.f, 1.0f, 1.0f, 1.0f };
 	m_pd3dCommandList->ClearRenderTargetView(d3dRTVCPUDescriptorHandle, pfClearColor, 0, NULL);
 
 	m_pd3dCommandList->ClearDepthStencilView(d3dDSVDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.f, 0, 0, NULL);
 }
-
-void Render() 
-{
-
-}
-
 
 void GameFramework::RenderEnd()
 {
@@ -520,7 +577,14 @@ void GameFramework::RenderEnd()
 
 void GameFramework::Present()
 {
-	m_pdxgiSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+	DXGI_PRESENT_PARAMETERS dxgiPresentParameters;
+	dxgiPresentParameters.DirtyRectsCount = 0;
+	dxgiPresentParameters.pDirtyRects = NULL;
+	dxgiPresentParameters.pScrollRect = NULL;
+	dxgiPresentParameters.pScrollOffset = NULL;
+
+	m_pdxgiSwapChain->Present1(1, 0, &dxgiPresentParameters);
+
 }
 
 void GameFramework::WaitForGPUComplete()

@@ -15,7 +15,11 @@ public:
 
 	static XMFLOAT4 GenerateRandomColor() {
 		std::uniform_real_distribution<float> uid{ 0.f, 1.f };
-		return XMFLOAT4(uid(g_dre), uid(g_dre), uid(g_dre), 1.0f);
+		float r = uid(g_dre);
+		float g = uid(g_dre);
+		float b = uid(g_dre);
+
+		return XMFLOAT4(r, g, b, 1.0f);
 	}
 
 	static XMVECTOR GenerateRandomUnitVectorOnSphere() {

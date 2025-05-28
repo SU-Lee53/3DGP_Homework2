@@ -11,7 +11,7 @@ FirstPersonPlayer::~FirstPersonPlayer()
 {
 }
 
-void FirstPersonPlayer::Initialize()
+void FirstPersonPlayer::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	m_pCamera = make_shared<FirstPersonCamera>();
 	m_pCamera->Initialize(static_pointer_cast<Player>(shared_from_this()));
@@ -19,6 +19,8 @@ void FirstPersonPlayer::Initialize()
 	m_pCamera->SetFOVAngle(60.0f);
 	m_pCamera->SetNearZ(1.01f);
 	m_pCamera->SetFarZ(500.0f);
+
+	m_pCamera->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
 void FirstPersonPlayer::Update(float fTimeElapsed)

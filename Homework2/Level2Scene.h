@@ -14,7 +14,7 @@ public:
 	virtual void ReleaseObjects() override;
 
 	virtual void Update(float fTimeElapsed) override;
-	virtual void Render() override;
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 
 public:
 	virtual void ProcessMouseInput(float fTimeElapsed) override;

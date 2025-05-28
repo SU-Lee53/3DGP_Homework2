@@ -27,7 +27,7 @@ public:
 	virtual void ReleaseObjects();
 
 	virtual void Update(float fElapsedTime);
-	virtual void Render();
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
 	
 	virtual void ProcessMouseInput(float fTimeElapsed) { }
 	virtual void ProcessKeyboardInput(float fTimeElapsed) { }
@@ -38,6 +38,7 @@ public:
 	std::shared_ptr<GameObject> FindObjectInScene(std::string_view svName);
 	void UpdatePipelineVaribles(std::shared_ptr<class Camera> pCamera);
 
+	std::shared_ptr<Player>& GetPlayer() { return m_pPlayer; }
 
 protected:
 	std::vector<std::shared_ptr<GameObject>>	m_pObjects = {};

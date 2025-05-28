@@ -21,12 +21,13 @@
 // STL
 #include <vector>
 #include <array>
+#include <span>
 #include <algorithm>
 #include <memory>
-#include <ranges>
 #include <type_traits>
 #include <random>
 #include <unordered_set>
+#include <ranges>
 
 using tstring = std::basic_string<_TCHAR>;
 
@@ -70,7 +71,6 @@ using namespace Microsoft::WRL;
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
-using namespace DirectX;
 using namespace DirectX::PackedVector;
 
 
@@ -93,6 +93,8 @@ extern ComPtr<ID3D12Resource> CreateBufferResources(ComPtr<ID3D12Device> pd3dDev
 
 extern void ShowErrorMessage(std::string_view file, int line, std::string_view message);
 
+extern XMFLOAT4 ConvertWinColorToD3DColor(COLORREF color, float alpha = 1.0f);
+
 #define SHOW_ERROR(strMsg)		ShowErrorMessage(__FILE__, __LINE__, strMsg);
 
 
@@ -102,6 +104,7 @@ inline bool IsEqual(float fA, float fB) { return (::IsZero(fA - fB)); }
 
 // Additional Headers
 #include "Defines.h"
+#include "VertexType.h"
 
 #include "RandomGenerator.h"
 #include "XMMathHelper.h"
@@ -113,6 +116,7 @@ inline bool IsEqual(float fA, float fB) { return (::IsZero(fA - fB)); }
 // Game Framework
 #include "GameFramework.h"
 #include "Mesh.h"
+#include "MeshHelper.h"
 #include "GameObject.h"
 
 

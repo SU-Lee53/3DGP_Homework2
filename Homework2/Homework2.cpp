@@ -60,7 +60,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             // Framework Update
             g_pGameFramework->Update();
             g_pGameFramework->Render();
-            g_pGameFramework->MoveToNextFrame();
         }
     }
 

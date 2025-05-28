@@ -21,14 +21,14 @@ public:
 	
 
 public:
-	virtual void Initialize() override;
+	virtual void Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 	virtual void Update(float fTimeElapsed) override;
-	virtual void Render(ComPtr<ID3D12GraphicsCommandList> m_pd3dCommandList, std::shared_ptr<Camera> pCamera);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Camera> pCamera) override;
 	virtual void OnPicked() override;
 	virtual	void BeginCollision(std::shared_ptr<GameObject> pOther) override;
 
 public:
-	static void PrepareExplosion();
+	static void PrepareExplosion(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
 
 protected:
 	BOOL										m_bBlowingUp = FALSE;
@@ -42,7 +42,7 @@ protected:
 	float m_fExplosionRotation = 720.0f;
 	
 private:
-	static std::shared_ptr<Mesh>					m_pExplosionMesh;
+	static std::shared_ptr<Mesh<DiffusedVertex>>	m_pExplosionMesh;
 	static std::array<XMFLOAT3, EXPLOSION_DEBRISES> m_xmf3SphereVectors;
 
 

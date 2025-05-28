@@ -23,17 +23,7 @@ private:
 	static std::vector<D3D12_INPUT_ELEMENT_DESC> m_InputElementDesc;
 };
 
-struct Index {
-	union {
-		struct {
-			UINT v0;
-			UINT v1;
-			UINT v2;
-		};
-		UINT data[3];
-	};
-
-	UINT operator[](size_t idx) {
-		return data[idx];
-	}
+template <typename C>
+concept VertexType = requires(C c) {
+	{ c.m_xmf3Position } -> std::convertible_to<XMFLOAT3>;
 };

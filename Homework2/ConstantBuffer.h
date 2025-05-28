@@ -11,7 +11,7 @@ public:
 	~ConstantBuffer();
 
 public:
-	void UpdateData(T* const data);
+	void UpdateData(const T& data);
 	void SetBufferToPipeline(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, UINT uiRootParameterSlot);
 
 private:
@@ -43,10 +43,9 @@ inline ConstantBuffer<T>::~ConstantBuffer()
 }
 
 template<typename T>
-inline void ConstantBuffer<T>::UpdateData(T* const data)
+inline void ConstantBuffer<T>::UpdateData(const T& data)
 {
-	::memcpy(m_pMappedData, data, sizeof(T));
-	*m_pMappedData = data;
+	::memcpy(m_pMappedData, &data, sizeof(T));
 }
 
 template<typename T>

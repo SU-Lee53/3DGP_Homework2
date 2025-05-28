@@ -51,11 +51,6 @@ protected:
 
 };
 
-struct VS_TRANSFORM_DATA {
-	XMFLOAT4X4 gmtxWorld;
-	XMFLOAT4 color;
-};
-
 class DiffusedShader : public Shader {
 public:
 	DiffusedShader();
@@ -79,9 +74,23 @@ public:
 	virtual void OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
 	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera);
 
-private:
-	std::unique_ptr<ConstantBuffer<VS_TRANSFORM_DATA>> m_upConstantBuffer;
+};
 
+class WireframeShader : public DiffusedShader {
+public:
+	WireframeShader();
+	virtual ~WireframeShader();
+
+public:
+	virtual D3D12_RASTERIZER_DESC CreateRasterizerState() override;
+
+};
+
+
+struct VS_INSTANCING_DATA {
+	XMFLOAT4X4 xmf4x4Model;
+	XMFLOAT4X4 xmf4x4World;
+	XMFLOAT4 color;
 };
 
 class InstancedShader : public Shader {
@@ -108,6 +117,6 @@ public:
 	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera);
 
 private:
-	std::unique_ptr<StructuredBuffer<VS_TRANSFORM_DATA>> m_upStructuredBuffer;
+	std::unique_ptr<StructuredBuffer<VS_INSTANCING_DATA>> m_upStructuredBuffer;
 
 };

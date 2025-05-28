@@ -22,10 +22,6 @@ public:
 	void BuildObjects();
 	void ReleaseObjects();
 
-public:
-	static BOOL ChangeScene(TAG_SCENE_NAME eTargetSceneTag);
-	static BOOL ResetScene();
-
 private:
 	void CreateD3DDevice(bool bEnableDebugLayer);
 	void CreateSwapChain();
@@ -42,6 +38,7 @@ private:
 
 public:
 	void ProcessInput();
+	void AnimateObjects();
 
 private:
 	void RenderBegin();
@@ -112,11 +109,19 @@ private:
 
 	_TCHAR		m_pszFrameRate[50] = {};
 
+public:
+	static void SignalChangeScene(TAG_SCENE_NAME eTargetSceneTag);
+	BOOL ResetScene();
+
+
 private:
+	BOOL ChangeScene(TAG_SCENE_NAME eTargetSceneTag);
+
 	// Manages Scenes
-	static std::shared_ptr<Scene> m_pCurrentScene;
-	static std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> m_pScenes;
+	std::shared_ptr<Scene> m_pCurrentScene;
+	std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> m_pScenes;
 	static TAG_SCENE_NAME m_eCurrentSceneTag;
+	static TAG_SCENE_NAME m_eNextSceneTag;
 
 
 

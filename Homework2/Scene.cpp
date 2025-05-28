@@ -34,14 +34,21 @@ void Scene::UpdatePipelineVaribles(std::shared_ptr<class Camera> pCamera)
 {
 }
 
-void Scene::Render()
+void Scene::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	/*
+		for (const auto pObj : m_pObjects) {
+			RENDER.Add(pObj);
+		}
+
+		RENDER.Add(m_pPlayer);
+	*/
+
 	for (const auto pObj : m_pObjects) {
-		RENDER.Add(pObj);
+		pObj->Render(pd3dCommandList, m_pPlayer->GetCamera());
 	}
 
-	RENDER.Add(m_pPlayer);
-
+	m_pPlayer->Render(pd3dCommandList, m_pPlayer->GetCamera());
 }
 
 void Scene::CheckObjectByObjectCollisions()
@@ -66,13 +73,13 @@ std::shared_ptr<GameObject> Scene::PickObjectPointedByCursor(int xClient, int yC
 	XMVECTOR xmvPickPosition = XMLoadFloat3(&xmf3PickPosition);
 	XMMATRIX xmmtxView = XMLoadFloat4x4(&pCamera->GetViewMatrix());
 
-	int nIntersected = 0;
+	BOOL bIntersected = FALSE;
 	float fNearestHitDistance = std::numeric_limits<float>::max();
 	shared_ptr<GameObject> pNearestObject = nullptr;
 	for (shared_ptr<GameObject>& pObj : m_pObjects) {
 		float fHitDistance = std::numeric_limits<float>::max();
-		nIntersected = pObj->PickObjectByRayIntersection(xmvPickPosition, xmmtxView, fHitDistance);
-		if ((nIntersected > 0) && (fHitDistance < fNearestHitDistance)) {
+		bIntersected = pObj->PickObjectByRayIntersection(xmvPickPosition, xmmtxView, fHitDistance);
+		if ((bIntersected) && (fHitDistance < fNearestHitDistance)) {
 			fNearestHitDistance = fHitDistance;
 			pNearestObject = pObj;
 		}

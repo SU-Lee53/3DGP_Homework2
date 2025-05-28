@@ -18,12 +18,13 @@ public:
 
 	virtual void Rotate(float fPitch = 0.0f, float fYaw = 0.0f, float fRoll = 0.0f);
 
-	virtual void Initialize() override;
+	virtual void Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 	virtual void Update(float fTimeElapsed) override;
 
 	virtual void ProcessMouseInput(float fTimeElapsed) {};
 	virtual void ProcessKeyboardInput(float fTimeElapsed) {};
-	virtual void Render(ComPtr<ID3D12GraphicsCommandList> m_pd3dCommandList, std::shared_ptr<Camera> pCamera);
+	virtual void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Camera> pCamera) override;
+	void Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
 
 	void SetCamera(std::shared_ptr<Camera> pCamera) { m_pCamera = pCamera; }
 	std::shared_ptr<Camera>& GetCamera() { return m_pCamera; }

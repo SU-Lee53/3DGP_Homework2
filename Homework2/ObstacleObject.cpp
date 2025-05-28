@@ -7,11 +7,11 @@
 
 using namespace std;
 
-void ObstacleObject::Initialize()
+void ObstacleObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	shared_ptr<Mesh> pCubeMesh = make_shared<Mesh>();
+	shared_ptr<Mesh<DiffusedVertex>> pCubeMesh = make_shared<Mesh<DiffusedVertex>>();
 	float fExtents = 2.f;
-	MeshHelper::CreateCubeMesh(pCubeMesh, fExtents, fExtents, fExtents);
+	MeshHelper::CreateCubeMesh(pd3dDevice, pd3dCommandList, pCubeMesh, fExtents, fExtents, fExtents);
 
 	SetMesh(pCubeMesh);
 
@@ -27,9 +27,9 @@ void ObstacleObject::Update(float fElapsedTime)
 	GameObject::Update(fElapsedTime);
 }
 
-void ObstacleObject::Render(HDC hDCFrameBuffer, std::shared_ptr<class Camera> pCamera)
+void ObstacleObject::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<class Camera> pCamera)
 {
-	GameObject::Render(hDCFrameBuffer, pCamera);
+	GameObject::Render(pd3dCommandList, pCamera);
 }
 
 void ObstacleObject::BeginCollision(std::shared_ptr<GameObject> pOther)

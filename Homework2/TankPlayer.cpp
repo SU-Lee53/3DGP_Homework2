@@ -16,7 +16,7 @@ TankPlayer::~TankPlayer()
 {
 }
 
-void TankPlayer::Initialize()
+void TankPlayer::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	m_pCamera = make_shared<ThirdPersonCamera>();
 	m_pCamera->Initialize(static_pointer_cast<Player>(shared_from_this()));
@@ -25,23 +25,28 @@ void TankPlayer::Initialize()
 	m_pCamera->SetNearZ(1.01f);
 	m_pCamera->SetFarZ(500.0f);
 	SetCameraOffset(XMFLOAT3{ 0.f, 3.0f, -10.0f });
+	m_pCamera->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 
 	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateMeshFromOBJFiles(pTankMesh, L"../Resources/Tank.obj");
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTankMesh, L"../Resources/Tank.obj", XMFLOAT4{0.f, 1.f, 0.f, 1.f});
 	SetMesh(pTankMesh);
 	SetColor(RGB(0, 255, 0));
 	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
+	SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 	shared_ptr<Mesh<DiffusedVertex>> pBulletMesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateCubeMesh(pBulletMesh, 0.5f, 0.5f, 1.f);
-	std::generate_n(m_pBullets.begin(), BULLET_COUNT, [this, &pBulletMesh]()->std::shared_ptr<BulletObject> {
+	MeshHelper::CreateCubeMesh(pd3dDevice, pd3dCommandList, pBulletMesh, 0.5f, 0.5f, 1.f);
+	std::generate_n(m_pBullets.begin(), BULLET_COUNT, [this, &pBulletMesh, &pd3dDevice, &pd3dCommandList]()->std::shared_ptr<BulletObject> {
 		shared_ptr<BulletObject> pBullet = make_shared<BulletObject>(m_fBulletEffectiveRange);
 		pBullet->SetMesh(pBulletMesh);
 		pBullet->SetRotationAxis(XMFLOAT3{ 0.f, 1.f, 0.f });
 		pBullet->SetRotationSpeed(360.f);
 		pBullet->SetMovingSpeed(120.0f);
 		pBullet->SetActive(FALSE);
+		pBullet->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+		pBullet->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 		return pBullet;
 	});
 
@@ -49,11 +54,13 @@ void TankPlayer::Initialize()
 	XMStoreFloat3(&xmf3ShieldSize, XMVectorScale(XMLoadFloat3(&m_xmOBB.Extents), 2.0));
 	float fShieldSize = std::max(std::max(xmf3ShieldSize.x, xmf3ShieldSize.y), xmf3ShieldSize.z);
 	m_pShieldMesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateCubeMesh(m_pShieldMesh, fShieldSize, fShieldSize, fShieldSize);
+	MeshHelper::CreateCubeMesh(pd3dDevice, pd3dCommandList, m_pShieldMesh, fShieldSize, fShieldSize, fShieldSize);
 
 	m_pShieldObject = make_shared<ShieldObject>();
 	m_pShieldObject->SetOwner(static_pointer_cast<Player>(shared_from_this()));
-	m_pShieldObject->Initialize();
+	m_pShieldObject->Initialize(pd3dDevice, pd3dCommandList);
+	m_pShieldObject->SetShader(SHADER.GetShader(TAG_SHADER_WIREFRAME));
+	m_pShieldObject->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 }
 
@@ -67,20 +74,20 @@ void TankPlayer::Update(float fTimeElapsed)
 	m_pShieldObject->Update(fTimeElapsed);
 }
 
-void TankPlayer::Render(std::shared_ptr<Camera> pCamera)
+void TankPlayer::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Camera> pCamera)
 {
 	if (pCamera->IsInFrustum(m_xmOBB)) {
-		GameObject::Render(m_pTransform->GetWorldMatrix(), m_pMesh);
+		GameObject::Render(pd3dCommandList, pCamera);
 
 		if (m_bShieldOn) {
-			m_pShieldObject->Render(pCamera);
+			m_pShieldObject->Render(pd3dCommandList, pCamera);
 		}
 	}
 
-
-	std::for_each(m_pBullets.begin(), m_pBullets.end(), [&pCamera](std::shared_ptr<BulletObject>& p) {
-		if (p->IsActive()) p->Render(pCamera);
-	});
+	for (const auto& pBullet : m_pBullets) {
+		if (pBullet->IsActive())
+			pBullet->Render(pd3dCommandList, pCamera);
+	}
 
 }
 

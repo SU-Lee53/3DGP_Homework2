@@ -16,8 +16,8 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 	// WallsObject
 	{
 		float fHalfWidth = 45.0f, fHalfHeight = 45.0f, fHalfDepth = 45.0f;
-		shared_ptr<Mesh> pWallMesh = make_shared<Mesh>();
-		MeshHelper::CreateWallMesh(pWallMesh, fHalfWidth * 2.0f, fHalfHeight * 2.0f, fHalfDepth * 2.0f, 30);
+		shared_ptr<Mesh<DiffusedVertex>> pWallMesh = make_shared<Mesh<DiffusedVertex>>();
+		MeshHelper::CreateWallMesh(pd3dDevice, pd3dCommandList, pWallMesh, fHalfWidth * 2.0f, fHalfHeight * 2.0f, fHalfDepth * 2.0f, 30);
 
 		m_pWallsObject = make_shared<WallsObject>();
 		m_pWallsObject->GetTransform()->SetPosition(0.0f, fHalfHeight, 0.0f);
@@ -30,13 +30,17 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 		m_pWallsObject->SetWallPlane(4, XMFLOAT4{ 0.0f, 0.0f, +1.0f, fHalfDepth });
 		m_pWallsObject->SetWallPlane(5, XMFLOAT4{ 0.0f, 0.0f, -1.0f, fHalfDepth });
 		m_pWallsObject->SetOBB(BoundingOrientedBox{ XMFLOAT3{0.f, 0.f, 0.f}, XMFLOAT3{fHalfWidth, fHalfHeight, fHalfDepth * 0.05f}, XMFLOAT4{0.f, 0.f, 0.f, 1.f} });
+		m_pWallsObject->SetShader(SHADER.GetShader(TAG_SHADER_WIREFRAME));
+		m_pWallsObject->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	}
 
 	// Enemy Tank
 	for (int i = 0; i < 10; ++i) {
 		std::shared_ptr<TankObject> pTank = make_shared<TankObject>();
 		pTank->SetColor(RGB(255, 0, 0));
-		pTank->Initialize();
+		pTank->Initialize(pd3dDevice, pd3dCommandList);
+		pTank->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+		pTank->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 		m_pObjects.push_back(pTank);
 	}
 
@@ -44,25 +48,31 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 	for (int i = 0; i < 5; ++i) {
 		std::shared_ptr<ObstacleObject> pObstacle = make_shared<ObstacleObject>();
 		pObstacle->SetColor(RGB(255, 0, 0));
-		pObstacle->Initialize();
+		pObstacle->Initialize(pd3dDevice, pd3dCommandList);
+		pObstacle->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+		pObstacle->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 		m_pObjects.push_back(pObstacle);
 	}
 
 	m_pPlayer = make_shared<TankPlayer>();
-	m_pPlayer->Initialize();
+	m_pPlayer->Initialize(pd3dDevice, pd3dCommandList);
+	m_pPlayer->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pPlayer->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	m_pPlayer->GetTransform()->SetPosition(0.f, 0.f, 0.f);
 
 	// You Win!
-	shared_ptr<Mesh> pWinMesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pWinMesh, L"../Resources/Win.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pWinMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pWinMesh, L"../Resources/Win.obj", XMFLOAT4{ 0.f, 0.f, 1.f, 1.f });
 
 	m_pWinTextObject = make_shared<GameObject>();
 	m_pWinTextObject->SetColor(RGB(0, 0, 255));
 	m_pWinTextObject->SetMesh(pWinMesh);
 	m_pWinTextObject->GetTransform()->SetPosition(XMFLOAT3{ 0.f, 5.f, 0.f });
 	m_pWinTextObject->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
+	m_pWinTextObject->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pWinTextObject->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-	ExplosiveObject::PrepareExplosion();
+	ExplosiveObject::PrepareExplosion(pd3dDevice, pd3dCommandList);
 }
 
 void Level2Scene::ReleaseObjects()
@@ -123,8 +133,14 @@ void Level2Scene::Update(float fTimeElapsed)
 
 }
 
-void Level2Scene::Render()
+void Level2Scene::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	Scene::Render(pd3dCommandList);
+	m_pWallsObject->Render(pd3dCommandList, m_pPlayer->GetCamera());
+
+	if (m_bGameEnded) {
+		m_pWinTextObject->Render(pd3dCommandList, m_pPlayer->GetCamera());
+	}
 }
 
 void Level2Scene::ProcessMouseInput(float fTimeElapsed)
@@ -150,7 +166,7 @@ void Level2Scene::ProcessKeyboardInput(float fTimeElapsed)
 	}
 
 	if (INPUT.GetButtonDown(VK_ESCAPE)) {
-		GameFramework::ChangeScene(TAG_SCENE_MENU);
+		GameFramework::SignalChangeScene(TAG_SCENE_MENU);
 		m_bSceneChanged = TRUE;
 		return;
 	}
@@ -186,7 +202,7 @@ void Level2Scene::CheckObjectByWallCollisions()
 			{
 				if(!p->GetCollisionSet().contains(m_pWallsObject)) {
 					int nPlaneIndex = -1;
-					for (auto& [idx, xmf4Plane] : std::views::enumerate(m_pWallsObject->GetWallPlanes())) {
+					for (auto&& [idx, xmf4Plane] : m_pWallsObject->GetWallPlanes() | std::views::enumerate) {
 						PlaneIntersectionType intersectType = p->GetOBB().Intersects(XMLoadFloat4(&xmf4Plane));
 						if (intersectType == BACK) {
 							nPlaneIndex = idx;
@@ -194,8 +210,9 @@ void Level2Scene::CheckObjectByWallCollisions()
 						}
 					}
 					if (nPlaneIndex != -1) {
+						XMFLOAT3 xmf3MovingDirection = p->GetMovingDirection();
 						XMVECTOR xmvNormal = XMVectorSetW(XMLoadFloat4(&m_pWallsObject->GetWallPlanes().at(nPlaneIndex)), 0.0f);
-						XMVECTOR xmvReflect = XMVector3Reflect(XMLoadFloat3(&p->GetMovingDirection()), xmvNormal);
+						XMVECTOR xmvReflect = XMVector3Reflect(XMLoadFloat3(&xmf3MovingDirection), xmvNormal);
 						XMFLOAT3 xmf3Reflect;
 						XMStoreFloat3(&xmf3Reflect, xmvReflect);
 						p->SetMovingDirection(xmf3Reflect);
@@ -209,7 +226,7 @@ void Level2Scene::CheckObjectByWallCollisions()
 			{
 				if (!p->GetCollisionSet().contains(m_pWallsObject)) {
 					int nPlaneIndex = -1;
-					for (auto& [idx, xmf4Plane] : std::views::enumerate(m_pWallsObject->GetWallPlanes())) {
+					for (auto&& [idx, xmf4Plane] : m_pWallsObject->GetWallPlanes() | std::views::enumerate) {
 						PlaneIntersectionType intersectType = p->GetOBB().Intersects(XMLoadFloat4(&xmf4Plane));
 						if (intersectType == INTERSECTING) {
 							nPlaneIndex = idx;
@@ -217,8 +234,9 @@ void Level2Scene::CheckObjectByWallCollisions()
 						}
 					}
 					if (nPlaneIndex != -1) {
+						XMFLOAT3 xmf3MovingDirection = p->GetMovingDirection();
 						XMVECTOR xmvNormal = XMVectorSetW(XMLoadFloat4(&m_pWallsObject->GetWallPlanes().at(nPlaneIndex)), 0.0f);
-						XMVECTOR xmvReflect = XMVector3Reflect(XMLoadFloat3(&p->GetMovingDirection()), xmvNormal);
+						XMVECTOR xmvReflect = XMVector3Reflect(XMLoadFloat3(&xmf3MovingDirection), xmvNormal);
 						XMFLOAT3 xmf3Reflect;
 						XMStoreFloat3(&xmf3Reflect, xmvReflect);
 						p->SetMovingDirection(xmf3Reflect);

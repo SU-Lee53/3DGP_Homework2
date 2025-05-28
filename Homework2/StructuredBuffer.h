@@ -12,7 +12,7 @@ public:
 
 public:
 	void UpdateData(std::span<T> data);
-	void UpdateData(T* const data, UINT offset, UINT dataSize);
+	void UpdateData(T* const data, UINT offset, UINT nDatas);
 	void UpdateData(T* const data, UINT index);
 
 	void SetBufferToPipeline(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, UINT uiRootParameterSlot);
@@ -57,10 +57,10 @@ inline void StructuredBuffer<T>::UpdateData(std::span<T> data)
 }
 
 template<typename T>
-inline void StructuredBuffer<T>::UpdateData(T* data, UINT offset, UINT dataSize)
+inline void StructuredBuffer<T>::UpdateData(T* data, UINT offset, UINT nDatas)
 {
-	assert(offset + dataSize < m_nDatas);
-	::memcpy(m_pMappedData + (offset * sizeof(T)), data, dataSize * sizeof(T));
+	assert(offset + nDatas < m_nDatas);
+	::memcpy(m_pMappedData + (offset * sizeof(T)), data, nDatas * sizeof(T));
 }
 
 template<typename T>

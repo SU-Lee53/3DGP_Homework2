@@ -9,20 +9,20 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 {
 	m_bSceneChanged = FALSE;
 
-	shared_ptr<Mesh> pTutorialMesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pTutorialMesh, L"../Resources/tutorial.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pTutorialMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTutorialMesh, L"../Resources/tutorial.obj", RandomGenerator::GenerateRandomColor());
 
-	shared_ptr<Mesh> pLevel1Mesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pLevel1Mesh, L"../Resources/Level-1.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pLevel1Mesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pLevel1Mesh, L"../Resources/Level-1.obj", RandomGenerator::GenerateRandomColor());
 	
-	shared_ptr<Mesh> pLevel2Mesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pLevel2Mesh, L"../Resources/Level-2.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pLevel2Mesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pLevel2Mesh, L"../Resources/Level-2.obj", RandomGenerator::GenerateRandomColor());
 
-	shared_ptr<Mesh> pStartMesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pStartMesh, L"../Resources/Start.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pStartMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pStartMesh, L"../Resources/Start.obj", RandomGenerator::GenerateRandomColor());
 	
-	shared_ptr<Mesh> pEndMesh = make_shared<Mesh>();
-	MeshHelper::CreateMeshFromOBJFiles(pEndMesh, L"../Resources/End.obj");
+	shared_ptr<Mesh<DiffusedVertex>> pEndMesh = make_shared<Mesh<DiffusedVertex>>();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pEndMesh, L"../Resources/End.obj", RandomGenerator::GenerateRandomColor());
 
 	m_pObjects.resize(5);
 	m_pObjects[0] = make_shared<GameObject>();
@@ -30,6 +30,8 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[0]->SetMesh(pTutorialMesh);
 	m_pObjects[0]->GetTransform()->SetPosition(0.f, 20.f, 70.f);
 	m_pObjects[0]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
+	m_pObjects[0]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[0]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 	m_pObjects[1] = make_shared<ExplosiveObject>();
 	m_pObjects[1]->SetColor(RandomGenerator::GenerateRandomColor());
@@ -38,6 +40,8 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[1]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
 	static_pointer_cast<ExplosiveObject>(m_pObjects[1])->SetAutoReset(FALSE);
 	m_pObjects[1]->SetName("Level1_Text");
+	m_pObjects[1]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[1]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	
 	m_pObjects[2] = make_shared<ExplosiveObject>();
 	m_pObjects[2]->SetColor(RandomGenerator::GenerateRandomColor());
@@ -46,6 +50,8 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[2]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
 	static_pointer_cast<ExplosiveObject>(m_pObjects[2])->SetAutoReset(FALSE);
 	m_pObjects[2]->SetName("Level2_Text");
+	m_pObjects[2]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[2]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	
 	m_pObjects[3] = make_shared<ExplosiveObject>();
 	m_pObjects[3]->SetColor(RandomGenerator::GenerateRandomColor());
@@ -54,6 +60,8 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[3]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
 	m_pObjects[3]->SetName("Start_Text");
 	static_pointer_cast<ExplosiveObject>(m_pObjects[3])->SetAutoReset(FALSE);
+	m_pObjects[3]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[3]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	
 	m_pObjects[4] = make_shared<ExplosiveObject>();
 	m_pObjects[4]->SetColor(RandomGenerator::GenerateRandomColor());
@@ -62,12 +70,16 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[4]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
 	static_pointer_cast<ExplosiveObject>(m_pObjects[4])->SetAutoReset(FALSE);
 	m_pObjects[4]->SetName("End_Text");
+	m_pObjects[4]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	m_pObjects[4]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 	m_pPlayer = make_shared<FirstPersonPlayer>();
-	m_pPlayer->Initialize();
+	m_pPlayer->Initialize(pd3dDevice, pd3dCommandList);
 	m_pPlayer->GetTransform()->SetPosition(0.f, 0.f, 0.f);
+	//m_pPlayer->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
+	//m_pPlayer->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-	ExplosiveObject::PrepareExplosion();
+	ExplosiveObject::PrepareExplosion(pd3dDevice, pd3dCommandList);
 }
 
 void MenuScene::ReleaseObjects()
@@ -79,21 +91,21 @@ void MenuScene::Update(float fTimeElapsed)
 {
 	if (auto p = FindObjectInScene("Level1_Text")) {
 		if (static_pointer_cast<ExplosiveObject>(p)->IsExploded()) {
-			GameFramework::ChangeScene(TAG_SCENE_LEVEL1);
+			GameFramework::SignalChangeScene(TAG_SCENE_LEVEL1);
 			m_bSceneChanged = TRUE;
 			return;
 		}
 	}
 	if (auto p = FindObjectInScene("Level2_Text")) {
 		if (static_pointer_cast<ExplosiveObject>(p)->IsExploded()) {
-			GameFramework::ChangeScene(TAG_SCENE_LEVEL2);
+			GameFramework::SignalChangeScene(TAG_SCENE_LEVEL2);
 			m_bSceneChanged = TRUE;
 			return;
 		}
 	}
 	if (auto p = FindObjectInScene("Start_Text")) {
 		if (static_pointer_cast<ExplosiveObject>(p)->IsExploded()) {
-			GameFramework::ChangeScene(TAG_SCENE_LEVEL1);
+			GameFramework::SignalChangeScene(TAG_SCENE_LEVEL1);
 			m_bSceneChanged = TRUE;
 			return;
 		}
@@ -119,8 +131,9 @@ void MenuScene::Update(float fTimeElapsed)
 	}
 }
 
-void MenuScene::Render()
+void MenuScene::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	Scene::Render(pd3dCommandList);
 }
 
 void MenuScene::ProcessMouseInput(float fTimeElapsed)

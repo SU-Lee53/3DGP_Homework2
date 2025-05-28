@@ -2,7 +2,7 @@
 
 namespace Vector3 {
 
-	inline XMFLOAT3 XMVectorToFloat3(XMVECTOR& xmVector) {
+	inline XMFLOAT3 XMVectorToFloat3(const XMVECTOR& xmVector) {
 		XMFLOAT3 xmf3Result;
 		XMStoreFloat3(&xmf3Result, xmVector);
 		return xmf3Result;
@@ -55,7 +55,7 @@ namespace Vector3 {
 		return XMVectorGetX(XMVector3Length(XMVectorSubtract(XMLoadFloat3(&xmf3Vector1), XMLoadFloat3(&xmf3Vector2))));
 	}
 
-	inline float Angle(XMVECTOR& xmvVector1, XMVECTOR& xmvVector2) {
+	inline float Angle(const XMVECTOR& xmvVector1, const XMVECTOR& xmvVector2) {
 		assert(XMVectorGetX(XMVector3Length(xmvVector1)) == 1.0f);
 		assert(XMVectorGetX(XMVector3Length(xmvVector2)) == 1.0f);
 
@@ -86,7 +86,7 @@ namespace Vector3 {
 
 namespace Vector4 {
 
-	inline XMFLOAT4 XMVectorToFloat4(XMVECTOR& xmVector) {
+	inline XMFLOAT4 XMVectorToFloat4(const XMVECTOR& xmVector) {
 		XMFLOAT4 xmf3Result;
 		XMStoreFloat4(&xmf3Result, xmVector);
 		return xmf3Result;
