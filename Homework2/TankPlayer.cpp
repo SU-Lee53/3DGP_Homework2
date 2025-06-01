@@ -30,9 +30,10 @@ void TankPlayer::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 
 	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTankMesh, L"../Resources/Tank.obj", XMFLOAT4{0.f, 1.f, 0.f, 1.f});
-	SetMesh(pTankMesh);
-	SetColor(RGB(0, 255, 0));
+	pTankMesh->ComputeMinYPos(XMFLOAT3{ -90.f, 180.f, 0.f });
 	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
+	SetMesh(pTankMesh);
+	SetColor(RGB(255, 0, 0));
 	SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
@@ -62,16 +63,22 @@ void TankPlayer::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 	m_pShieldObject->SetShader(SHADER.GetShader(TAG_SHADER_WIREFRAME));
 	m_pShieldObject->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
+	UpdateBoundingBox();
 }
 
 void TankPlayer::Update(float fTimeElapsed)
 {
+	if (GameFramework::m_pCurrentScene->HasFloor()) {
+		AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
+	}
+
 	Player::Update(fTimeElapsed);
 	std::for_each(m_pBullets.begin(), m_pBullets.end(), [&fTimeElapsed](std::shared_ptr<BulletObject>& p) {
 		if (p->IsActive()) p->Update(fTimeElapsed);
 	});
 
 	m_pShieldObject->Update(fTimeElapsed);
+
 }
 
 void TankPlayer::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::shared_ptr<Camera> pCamera)

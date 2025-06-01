@@ -21,7 +21,7 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 
 		m_pWallsObject = make_shared<WallsObject>();
 		m_pWallsObject->GetTransform()->SetPosition(0.0f, fHalfHeight, 0.0f);
-		m_pWallsObject->SetMesh(std::move(pWallMesh));
+		m_pWallsObject->SetMesh(pWallMesh);
 		m_pWallsObject->SetColor(RGB(0, 0, 0));
 		m_pWallsObject->SetWallPlane(0, XMFLOAT4{ +1.0f, 0.0f, 0.0f, fHalfWidth });
 		m_pWallsObject->SetWallPlane(1, XMFLOAT4{ -1.0f, 0.0f, 0.0f, fHalfWidth });
@@ -32,6 +32,9 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 		m_pWallsObject->SetOBB(BoundingOrientedBox{ XMFLOAT3{0.f, 0.f, 0.f}, XMFLOAT3{fHalfWidth, fHalfHeight, fHalfDepth * 0.05f}, XMFLOAT4{0.f, 0.f, 0.f, 1.f} });
 		m_pWallsObject->SetShader(SHADER.GetShader(TAG_SHADER_WIREFRAME));
 		m_pWallsObject->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+		m_bSceneHasFloor = TRUE;
+		m_fFloorHeight = 0.f;
 	}
 
 	// Enemy Tank
@@ -136,7 +139,9 @@ void Level2Scene::Update(float fTimeElapsed)
 void Level2Scene::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	Scene::Render(pd3dCommandList);
+
 	m_pWallsObject->Render(pd3dCommandList, m_pPlayer->GetCamera());
+
 
 	if (m_bGameEnded) {
 		m_pWinTextObject->Render(pd3dCommandList, m_pPlayer->GetCamera());
@@ -210,15 +215,12 @@ void Level2Scene::CheckObjectByWallCollisions()
 						}
 					}
 					if (nPlaneIndex != -1) {
-						XMFLOAT3 xmf3MovingDirection = p->GetMovingDirection();
-						XMVECTOR xmvNormal = XMVectorSetW(XMLoadFloat4(&m_pWallsObject->GetWallPlanes().at(nPlaneIndex)), 0.0f);
-						XMVECTOR xmvReflect = XMVector3Reflect(XMLoadFloat3(&xmf3MovingDirection), xmvNormal);
-						XMFLOAT3 xmf3Reflect;
-						XMStoreFloat3(&xmf3Reflect, xmvReflect);
-						p->SetMovingDirection(xmf3Reflect);
+						XMFLOAT3 xmf3CurMovingDirection = p->GetMovingDirection();
+						XMFLOAT3 xmf3NewDirection = Vector3::ScalarProduct(xmf3CurMovingDirection, -1);
+						p->SetMovingDirection(xmf3NewDirection);
 						p->BeginCollision(m_pWallsObject);
-						p->GetCollisionSet().insert(m_pWallsObject);
 					}
+					p->GetCollisionSet().insert(m_pWallsObject);
 				}
 				break;
 			}
@@ -234,15 +236,12 @@ void Level2Scene::CheckObjectByWallCollisions()
 						}
 					}
 					if (nPlaneIndex != -1) {
-						XMFLOAT3 xmf3MovingDirection = p->GetMovingDirection();
-						XMVECTOR xmvNormal = XMVectorSetW(XMLoadFloat4(&m_pWallsObject->GetWallPlanes().at(nPlaneIndex)), 0.0f);
-						XMVECTOR xmvReflect = XMVector3Reflect(XMLoadFloat3(&xmf3MovingDirection), xmvNormal);
-						XMFLOAT3 xmf3Reflect;
-						XMStoreFloat3(&xmf3Reflect, xmvReflect);
-						p->SetMovingDirection(xmf3Reflect);
+						XMFLOAT3 xmf3CurMovingDirection = p->GetMovingDirection();
+						XMFLOAT3 xmf3NewDirection = Vector3::ScalarProduct(xmf3CurMovingDirection, -1);
+						p->SetMovingDirection(xmf3NewDirection);
 						p->BeginCollision(m_pWallsObject);
-						p->GetCollisionSet().insert(m_pWallsObject);
 					}
+					p->GetCollisionSet().insert(m_pWallsObject);
 				}
 				break;
 
@@ -264,7 +263,10 @@ void Level2Scene::CheckPlayerByWallCollisions()
 	XMStoreFloat4(&xmOBBPlayerMoveCheck.Orientation, XMQuaternionNormalize(XMLoadFloat4(&xmOBBPlayerMoveCheck.Orientation)));
 
 	if (!xmOBBPlayerMoveCheck.Intersects(m_pPlayer->GetOBB())) {
-		m_pPlayer->BeginCollision(m_pWallsObject);
+		if (!m_pPlayer->GetCollisionSet().contains(m_pWallsObject)) {
+			m_pPlayer->BeginCollision(m_pWallsObject);
+			m_pPlayer->GetCollisionSet().insert(m_pWallsObject);
+		}
 	}
 }
 
@@ -283,9 +285,6 @@ void Level2Scene::CheckObjectByObjectCollisions()
 
 					pSrc->GetCollisionSet().insert(pDest);
 					pDest->GetCollisionSet().insert(pSrc);
-				}
-				else {
-					__debugbreak();
 				}
 			}
 			else {
@@ -311,6 +310,10 @@ void Level2Scene::CheckPlayerByObjectCollisions()
 
 				m_pPlayer->GetCollisionSet().insert(pObj);
 				pObj->GetCollisionSet().insert(m_pPlayer);
+			}
+			else {
+				m_pPlayer->InCollision(pObj);
+				pObj->BeginCollision(m_pPlayer);
 			}
 		}
 		else {

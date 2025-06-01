@@ -60,6 +60,7 @@ public:
 
 	virtual void OnPicked() { }
 	virtual void BeginCollision(std::shared_ptr<GameObject> pOther) {}
+	virtual void InCollision(std::shared_ptr<GameObject> pOther) {}
 	virtual void EndCollision(std::shared_ptr<GameObject> pOther) {}
 
 
@@ -68,7 +69,11 @@ public:
 
 	std::shared_ptr<Transform>& GetTransform() { return m_pTransform; }
 
-	std::unordered_set<std::shared_ptr<GameObject>> GetCollisionSet() { return m_pCollisionSet; }
+	std::unordered_set<std::shared_ptr<GameObject>>& GetCollisionSet() { return m_pCollisionSet; }
+	void AddToCollisionSet(std::shared_ptr<GameObject> pObj) { m_pCollisionSet.insert(pObj); }
+
+	void AdjustHeightToFloor(float fFloorHeight);
+
 
 public:
 	virtual void CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);

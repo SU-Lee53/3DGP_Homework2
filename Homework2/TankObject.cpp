@@ -61,15 +61,17 @@ void TankObject::Move(const XMFLOAT3& xmf3Shift)
 	m_xmf4x4World._42 = xmf3CurPosition.y;
 	m_xmf4x4World._43 = xmf3CurPosition.z;
 
+	AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
 }
 
 void TankObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTankMesh, L"../Resources/Tank.obj", XMFLOAT4{1.f, 0.f, 0.f, 1.f});
+	pTankMesh->ComputeMinYPos(XMFLOAT3{ -90.f, 180.f, 0.f });
+	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
 	SetMesh(pTankMesh);
 	SetColor(RGB(255, 0, 0));
-	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
 
 	XMFLOAT3 xmf3InitialPosition{};
 	xmf3InitialPosition.x = RandomGenerator::GenerateRandomFloatInRange(-45.f, 45.f);
@@ -84,6 +86,8 @@ void TankObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 
 	InitializeMovingDirection();
 
+	UpdateBoundingBox();
+	AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
 }
 
 void TankObject::Update(float fElapsedTime)
@@ -115,12 +119,15 @@ void TankObject::BeginCollision(std::shared_ptr<GameObject> pOther)
 			m_bBlowingUp = TRUE;
 		}
 		else {
-			XMVECTOR xmvNormal = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&m_pTransform->GetPosition()), XMLoadFloat3(&p->GetTransform()->GetPosition())));
-			XMVECTOR xmvReflected = XMVector3Reflect(XMLoadFloat3(&m_xmf3MovingDirection), xmvNormal);
+			//XMVECTOR xmvNormal = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&m_pTransform->GetPosition()), XMLoadFloat3(&p->GetTransform()->GetPosition())));
+			//XMVECTOR xmvReflected = XMVector3Reflect(XMLoadFloat3(&m_xmf3MovingDirection), xmvNormal);
+			//
+			//XMFLOAT3 xmf3Reflect;
+			//XMStoreFloat3(&xmf3Reflect, xmvReflected);
 
-			XMFLOAT3 xmf3Reflect;
-			XMStoreFloat3(&xmf3Reflect, xmvReflected);
-			SetMovingDirection(xmf3Reflect);
+
+			XMFLOAT3 xmf3Direction = Vector3::ScalarProduct(m_xmf3MovingDirection, -1);
+			SetMovingDirection(xmf3Direction);
 		}
 	}
 	else if (auto p = dynamic_pointer_cast<TankObject>(pOther)) {
@@ -147,12 +154,7 @@ void TankObject::BeginCollision(std::shared_ptr<GameObject> pOther)
 	else if (auto p = dynamic_pointer_cast<WallsObject>(pOther)) {
 	}
 	else if (auto p = dynamic_pointer_cast<ObstacleObject>(pOther)) {
-		XMVECTOR xmvNormal = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&m_pTransform->GetPosition()), XMLoadFloat3(&p->GetTransform()->GetPosition())));
-		XMVECTOR xmvReflected = XMVector3Reflect(XMLoadFloat3(&m_xmf3MovingDirection), xmvNormal);
-
-		XMFLOAT3 xmf3Reflect;
-		XMStoreFloat3(&xmf3Reflect, xmvReflected);
-
-		SetMovingDirection(xmf3Reflect);
+		XMFLOAT3 xmf3Direction = Vector3::ScalarProduct(m_xmf3MovingDirection, -1);
+		SetMovingDirection(xmf3Direction);
 	}
 }

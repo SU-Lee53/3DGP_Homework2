@@ -113,12 +113,12 @@ public:
 	static void SignalChangeScene(TAG_SCENE_NAME eTargetSceneTag);
 	BOOL ResetScene();
 
+	static std::shared_ptr<Scene> m_pCurrentScene;
 
 private:
 	BOOL ChangeScene(TAG_SCENE_NAME eTargetSceneTag);
 
 	// Manages Scenes
-	std::shared_ptr<Scene> m_pCurrentScene;
 	std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> m_pScenes;
 	static TAG_SCENE_NAME m_eCurrentSceneTag;
 	static TAG_SCENE_NAME m_eNextSceneTag;

@@ -1,4 +1,3 @@
-#include "StructuredBuffer.h"
 #pragma once
 
 template<typename T>

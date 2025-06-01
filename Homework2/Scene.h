@@ -21,6 +21,8 @@ public:
 
 public:
 	TAG_SCENE_NAME GetSceneTag() { return m_eSceneTag; }
+	BOOL HasFloor() { return m_bSceneHasFloor; }
+	float GetFloorHeight() { return m_fFloorHeight; }
 
 public:
 	virtual void BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList);
@@ -50,4 +52,6 @@ protected:
 
 	BOOL m_bSceneChanged = FALSE;
 
+	BOOL m_bSceneHasFloor = FALSE;
+	float m_fFloorHeight = 0.f;
 };

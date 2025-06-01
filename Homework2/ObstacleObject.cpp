@@ -20,6 +20,9 @@ void ObstacleObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 	xmf3InitialPosition.y = 0;
 	xmf3InitialPosition.z = RandomGenerator::GenerateRandomFloatInRange(-45.f, 45.f);
 	m_pTransform->SetPosition(xmf3InitialPosition);
+
+	UpdateBoundingBox();
+	AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
 }
 
 void ObstacleObject::Update(float fElapsedTime)

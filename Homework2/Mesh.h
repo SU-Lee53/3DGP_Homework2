@@ -51,6 +51,29 @@ public:
 	
 	void SetStartIndex(UINT nIndex) { m_nStartIndex = nIndex; }
 	void SetBaseVertex(UINT nBase) { m_nBaseVertex = nBase; }
+	
+	void SetMinYPos(const XMFLOAT3& xmf3MinYPos) { m_xmf3MinYPos = xmf3MinYPos; }
+	void ComputeMinYPos(const XMFLOAT3& xmf3DefaultOrientation) {
+
+		XMFLOAT4X4 xmf4x4Orientation;
+
+		float fPitch = XMConvertToRadians(xmf3DefaultOrientation.x);
+		float fYaw = XMConvertToRadians(xmf3DefaultOrientation.y);
+		float fRoll = XMConvertToRadians(xmf3DefaultOrientation.z);
+
+		XMStoreFloat4x4(&xmf4x4Orientation, XMMatrixRotationRollPitchYaw(fPitch, fYaw, fRoll));
+
+		auto pos = std::min_element(m_Vertices.begin(), m_Vertices.end(), [&xmf4x4Orientation](const T& lhs, const T& rhs) {
+			float fLhsY = Vector3::TransformNormal(lhs.m_xmf3Position, xmf4x4Orientation).y;
+			float fRhsY = Vector3::TransformNormal(rhs.m_xmf3Position, xmf4x4Orientation).y;
+
+			return fLhsY < fRhsY;
+		});
+
+		SetMinYPos(pos->m_xmf3Position);
+	}
+
+	XMFLOAT3 GetMinYPos() { return m_xmf3MinYPos; }
 
 
 	void Create(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
@@ -81,6 +104,9 @@ protected:
 
 	UINT m_nStartIndex = 0;
 	UINT m_nBaseVertex = 0;
+
+	XMFLOAT3 m_xmf3MinYPos = {};
+
 
 };
 

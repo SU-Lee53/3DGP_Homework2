@@ -10,6 +10,7 @@ using namespace std;
 
 TAG_SCENE_NAME GameFramework::m_eCurrentSceneTag = TAG_SCENE_UNDEFINED;
 TAG_SCENE_NAME GameFramework::m_eNextSceneTag = TAG_SCENE_UNDEFINED;
+std::shared_ptr<Scene> GameFramework::m_pCurrentScene = nullptr;
 
 GameFramework::GameFramework()
 {
@@ -103,8 +104,8 @@ void GameFramework::BuildObjects()
 		m_pScenes[TAG_SCENE_LEVEL1] = make_shared<Level1Scene>();
 		m_pScenes[TAG_SCENE_LEVEL2] = make_shared<Level2Scene>();
 
-		m_eCurrentSceneTag = TAG_SCENE_TITLE;
-		m_eNextSceneTag = TAG_SCENE_TITLE;
+		m_eCurrentSceneTag = TAG_SCENE_LEVEL2;
+		m_eNextSceneTag = TAG_SCENE_LEVEL2;
 		m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
 		m_pCurrentScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 	}

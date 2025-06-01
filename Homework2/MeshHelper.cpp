@@ -64,6 +64,9 @@ void MeshHelper::CreateCubeMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 
 	pMesh->Create(pd3dDevice, pd3dCommandList);
 
+	auto pos = std::min_element(vertices.begin(), vertices.end(), [](const DiffusedVertex& lhs, const DiffusedVertex& rhs) { return lhs.m_xmf3Position.y < rhs.m_xmf3Position.y; });
+	pMesh->SetMinYPos(pos->m_xmf3Position);
+
 	pMesh->SetOBB(BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fx, fy, fz), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
 }
 
@@ -211,7 +214,8 @@ void MeshHelper::CreateWallMesh(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gr
 	pMesh->SetStride(sizeof(DiffusedVertex));
 	pMesh->Create(pd3dDevice, pd3dCommandList);
 
-
+	auto pos = std::min_element(vertices.begin(), vertices.end(), [](const DiffusedVertex& lhs, const DiffusedVertex& rhs) { return lhs.m_xmf3Position.y < rhs.m_xmf3Position.y; });
+	pMesh->SetMinYPos(pos->m_xmf3Position);
 
 	pMesh->SetOBB(BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fHalfWidth, fHalfHeight, fHalfDepth), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
 }
@@ -283,6 +287,9 @@ BOOL MeshHelper::CreateMeshFromOBJFiles(ComPtr<ID3D12Device> pd3dDevice, ComPtr<
 
 	pMesh->SetStride(sizeof(DiffusedVertex));
 	pMesh->Create(pd3dDevice, pd3dCommandList);
+
+	auto pos = std::min_element(vertices.begin(), vertices.end(), [](const DiffusedVertex& lhs, const DiffusedVertex& rhs) { return lhs.m_xmf3Position.y < rhs.m_xmf3Position.y; });
+	pMesh->SetMinYPos(pos->m_xmf3Position);
 
 	XMFLOAT3 xmf3ObbExtent = Vector3::Subtract(XMFLOAT3{ itNewMaxX->x, itNewMaxY->y, itNewMaxZ->z }, xmf3NewCenter);
 	pMesh->SetOBB(BoundingOrientedBox(xmf3NewCenter, xmf3ObbExtent, XMFLOAT4{ 0.f, 0.f, 0.f, 1.f }));
@@ -614,6 +621,9 @@ void MeshHelper::CreateRollercoasterRailMesh(ComPtr<ID3D12Device> pd3dDevice, Co
 	pMesh->SetIndices(indices);
 	pMesh->SetStride(sizeof(DiffusedVertex));
 	pMesh->Create(pd3dDevice, pd3dCommandList);
+
+	auto pos = std::min_element(vertices.begin(), vertices.end(), [](const DiffusedVertex& lhs, const DiffusedVertex& rhs) { return lhs.m_xmf3Position.y < rhs.m_xmf3Position.y; });
+	pMesh->SetMinYPos(pos->m_xmf3Position);
 
 	pMesh->SetOBB(BoundingOrientedBox(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(fCourseRadius, fCourseRadius, fCourseRadius), XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
 
