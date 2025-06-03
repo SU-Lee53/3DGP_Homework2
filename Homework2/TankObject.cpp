@@ -74,9 +74,9 @@ void TankObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 	SetColor(RGB(255, 0, 0));
 
 	XMFLOAT3 xmf3InitialPosition{};
-	xmf3InitialPosition.x = RandomGenerator::GenerateRandomFloatInRange(-45.f, 45.f);
+	xmf3InitialPosition.x = RandomGenerator::GenerateRandomFloatInRange(-30.f, 30.f);
 	xmf3InitialPosition.y = 0;
-	xmf3InitialPosition.z = RandomGenerator::GenerateRandomFloatInRange(-45.f, 45.f);
+	xmf3InitialPosition.z = RandomGenerator::GenerateRandomFloatInRange(-30.f, 30.f);
 
 	m_pTransform->SetPosition(xmf3InitialPosition);
 
@@ -158,3 +158,11 @@ void TankObject::BeginCollision(std::shared_ptr<GameObject> pOther)
 		SetMovingDirection(xmf3Direction);
 	}
 }
+
+void TankObject::InCollision(std::shared_ptr<GameObject> pOther)
+{
+	if (auto p = dynamic_pointer_cast<TankPlayer>(pOther)) {
+		m_pTransform->InvalidateMovement();
+	}
+}
+

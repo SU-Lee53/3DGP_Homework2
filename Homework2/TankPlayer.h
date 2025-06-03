@@ -20,6 +20,7 @@ public:
 
 public:
 	virtual void BeginCollision(std::shared_ptr<GameObject> pOther) override;
+	virtual void InCollision(std::shared_ptr<GameObject> pOther) override;
 
 public:
 	BOOL GetAutoFireMode() { return m_bAutoFire; }

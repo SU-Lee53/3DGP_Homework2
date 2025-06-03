@@ -313,7 +313,7 @@ void Level2Scene::CheckPlayerByObjectCollisions()
 			}
 			else {
 				m_pPlayer->InCollision(pObj);
-				pObj->BeginCollision(m_pPlayer);
+				pObj->InCollision(m_pPlayer);
 			}
 		}
 		else {

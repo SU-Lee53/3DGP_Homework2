@@ -104,8 +104,8 @@ void GameFramework::BuildObjects()
 		m_pScenes[TAG_SCENE_LEVEL1] = make_shared<Level1Scene>();
 		m_pScenes[TAG_SCENE_LEVEL2] = make_shared<Level2Scene>();
 
-		m_eCurrentSceneTag = TAG_SCENE_LEVEL2;
-		m_eNextSceneTag = TAG_SCENE_LEVEL2;
+		m_eCurrentSceneTag = TAG_SCENE_TITLE;
+		m_eNextSceneTag = TAG_SCENE_TITLE;
 		m_pCurrentScene = m_pScenes[m_eCurrentSceneTag];
 		m_pCurrentScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 	}
@@ -503,6 +503,10 @@ void GameFramework::ProcessInput()
 {
 	if (INPUT.GetButtonDown(VK_F9)) {
 		ChangeSwapChainState();
+	}
+	
+	if (INPUT.GetButtonDown('R')) {
+		ResetScene();
 	}
 
 

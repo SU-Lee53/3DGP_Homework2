@@ -175,6 +175,19 @@ void TankPlayer::BeginCollision(std::shared_ptr<GameObject> pOther)
 	}
 }
 
+void TankPlayer::InCollision(std::shared_ptr<GameObject> pOther)
+{
+	// 탱크 vs 플레이어 끼리 충돌간에 끼이는거만 좀 수정하자
+	if (auto p = dynamic_pointer_cast<TankObject>(pOther)) {
+		if (!p->IsBlowingUp()) {
+			m_pTransform->InvalidateMovement();
+		}
+	}
+	else if (auto p = dynamic_pointer_cast<ObstacleObject>(pOther)) {
+		m_pTransform->InvalidateMovement();
+	}
+}
+
 void TankPlayer::FireBullet(std::shared_ptr<GameObject> pLockedObject)
 {
 	std::shared_ptr<BulletObject> pBulletObject = nullptr;
