@@ -392,14 +392,10 @@ void InstancedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice)
 
 void InstancedShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	// 인스턴싱 최대 50개까지
-	m_upStructuredBuffer = std::make_unique<StructuredBuffer<VS_INSTANCING_DATA>>(pd3dDevice, pd3dCommandList, 250);
 }
 
 void InstancedShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas)
 {
-	m_upStructuredBuffer->UpdateData((VS_INSTANCING_DATA*)pData, 0, nDatas);
-	m_upStructuredBuffer->SetBufferToPipeline(pd3dCommandList, 1);
 }
 
 void InstancedShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)

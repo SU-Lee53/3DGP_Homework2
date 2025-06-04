@@ -53,7 +53,7 @@ template<typename T>
 inline void StructuredBuffer<T>::UpdateData(std::span<T> data)
 {
 	assert(data.size() < m_nDatas);
-	std::copy(data.begin(), data.end(), m_pMappedData);
+	::memcpy(m_pMappedData, data.data(), data.size() * sizeof(T));
 }
 
 template<typename T>

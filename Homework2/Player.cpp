@@ -16,8 +16,10 @@ void Player::Move(const XMFLOAT3& xmf3Direction, float fDistance)
 	XMFLOAT3 xmf3Shift = XMFLOAT3{ 0.f, 0.f, 0.f };
 	xmf3Shift = Vector3::Add(xmf3Shift, xmf3Direction, fDistance);
 	Move(xmf3Shift, TRUE);
-
-	AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
+	
+	if (GameFramework::m_pCurrentScene->HasFloor()) {
+		AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
+	}
 }
 
 void Player::Move(const XMFLOAT3& xmf3Shift, BOOL bUpdateVelocity)

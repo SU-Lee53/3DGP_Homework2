@@ -18,8 +18,6 @@ public:
 		});
 	}
 
-	
-
 public:
 	virtual void Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList) override;
 	virtual void Update(float fTimeElapsed) override;
@@ -40,7 +38,10 @@ protected:
 	float m_fDuration = 2.0f;
 	float m_fExplosionSpeed = 10.0f;
 	float m_fExplosionRotation = 720.0f;
-	
+
+private:
+	std::unique_ptr<StructuredBuffer<VS_INSTANCING_DATA>> m_upStructuredBuffer;
+
 private:
 	static std::shared_ptr<Mesh<DiffusedVertex>>	m_pExplosionMesh;
 	static std::array<XMFLOAT3, EXPLOSION_DEBRISES> m_xmf3SphereVectors;

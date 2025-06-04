@@ -10,23 +10,28 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_bSceneChanged = FALSE;
 
 	shared_ptr<Mesh<DiffusedVertex>> pTutorialMesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTutorialMesh, L"../Resources/tutorial.obj", RandomGenerator::GenerateRandomColor());
+	XMFLOAT4 xmf4TutorialMeshColor = RandomGenerator::GenerateRandomColor();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTutorialMesh, L"../Resources/tutorial.obj", xmf4TutorialMeshColor);
 
 	shared_ptr<Mesh<DiffusedVertex>> pLevel1Mesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pLevel1Mesh, L"../Resources/Level-1.obj", RandomGenerator::GenerateRandomColor());
+	XMFLOAT4 xmf4Level1MeshColor = RandomGenerator::GenerateRandomColor();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pLevel1Mesh, L"../Resources/Level-1.obj", xmf4Level1MeshColor);
 	
 	shared_ptr<Mesh<DiffusedVertex>> pLevel2Mesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pLevel2Mesh, L"../Resources/Level-2.obj", RandomGenerator::GenerateRandomColor());
+	XMFLOAT4 xmf4Level2MeshColor = RandomGenerator::GenerateRandomColor();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pLevel2Mesh, L"../Resources/Level-2.obj", xmf4Level2MeshColor);
 
 	shared_ptr<Mesh<DiffusedVertex>> pStartMesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pStartMesh, L"../Resources/Start.obj", RandomGenerator::GenerateRandomColor());
+	XMFLOAT4 xmf4StartMeshColor = RandomGenerator::GenerateRandomColor();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pStartMesh, L"../Resources/Start.obj", xmf4StartMeshColor);
 	
 	shared_ptr<Mesh<DiffusedVertex>> pEndMesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pEndMesh, L"../Resources/End.obj", RandomGenerator::GenerateRandomColor());
+	XMFLOAT4 xmf4EndMeshColor = RandomGenerator::GenerateRandomColor();
+	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pEndMesh, L"../Resources/End.obj", xmf4EndMeshColor);
 
 	m_pObjects.resize(5);
 	m_pObjects[0] = make_shared<GameObject>();
-	m_pObjects[0]->SetColor(RandomGenerator::GenerateRandomColor());
+	m_pObjects[0]->SetColor(xmf4TutorialMeshColor);
 	m_pObjects[0]->SetMesh(pTutorialMesh);
 	m_pObjects[0]->GetTransform()->SetPosition(0.f, 20.f, 70.f);
 	m_pObjects[0]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
@@ -34,7 +39,7 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[0]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 	m_pObjects[1] = make_shared<ExplosiveObject>();
-	m_pObjects[1]->SetColor(RandomGenerator::GenerateRandomColor());
+	m_pObjects[1]->SetColor(xmf4Level1MeshColor);
 	m_pObjects[1]->SetMesh(pLevel1Mesh);
 	m_pObjects[1]->GetTransform()->SetPosition(0.f, 10.f, 70.f);
 	m_pObjects[1]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
@@ -44,7 +49,7 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[1]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	
 	m_pObjects[2] = make_shared<ExplosiveObject>();
-	m_pObjects[2]->SetColor(RandomGenerator::GenerateRandomColor());
+	m_pObjects[2]->SetColor(xmf4Level2MeshColor);
 	m_pObjects[2]->SetMesh(pLevel2Mesh);
 	m_pObjects[2]->GetTransform()->SetPosition(0.f, 0.f, 70.f);
 	m_pObjects[2]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
@@ -54,7 +59,7 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[2]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	
 	m_pObjects[3] = make_shared<ExplosiveObject>();
-	m_pObjects[3]->SetColor(RandomGenerator::GenerateRandomColor());
+	m_pObjects[3]->SetColor(xmf4StartMeshColor);
 	m_pObjects[3]->SetMesh(pStartMesh);
 	m_pObjects[3]->GetTransform()->SetPosition(-20.f, -15.f, 70.f);
 	m_pObjects[3]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
@@ -64,7 +69,7 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pObjects[3]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 	
 	m_pObjects[4] = make_shared<ExplosiveObject>();
-	m_pObjects[4]->SetColor(RandomGenerator::GenerateRandomColor());
+	m_pObjects[4]->SetColor(xmf4EndMeshColor);
 	m_pObjects[4]->SetMesh(pEndMesh);
 	m_pObjects[4]->GetTransform()->SetPosition(20.f, -15.f, 70.f);
 	m_pObjects[4]->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
@@ -78,6 +83,11 @@ void MenuScene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pPlayer->GetTransform()->SetPosition(0.f, 0.f, 0.f);
 	//m_pPlayer->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
 	//m_pPlayer->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+	for (auto& pObj : m_pObjects) {
+		pObj->Initialize(pd3dDevice, pd3dCommandList);
+		pObj->UpdateBoundingBox();
+	}
 
 	ExplosiveObject::PrepareExplosion(pd3dDevice, pd3dCommandList);
 }

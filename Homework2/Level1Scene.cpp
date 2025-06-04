@@ -21,6 +21,10 @@ void Level1Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 	m_pObjects[0]->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
 	m_pObjects[0]->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
+	for (auto& pObj : m_pObjects) {
+		pObj->Initialize(pd3dDevice, pd3dCommandList);
+	}
+
 	m_pPlayer = make_shared<FirstPersonPlayer>();
 	m_pPlayer->Initialize(pd3dDevice, pd3dCommandList);
 	m_pPlayer->GetTransform()->SetPosition(0.f, 0.f, 0.f);

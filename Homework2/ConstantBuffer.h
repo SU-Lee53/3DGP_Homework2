@@ -26,7 +26,7 @@ inline ConstantBuffer<T>::ConstantBuffer(ComPtr<ID3D12Device> pd3dDevice, ComPtr
 		pd3dDevice,
 		pd3dCommandList,
 		NULL,
-		sizeof(T),
+		CB_SIZE(sizeof(T)),
 		D3D12_HEAP_TYPE_UPLOAD,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		NULL

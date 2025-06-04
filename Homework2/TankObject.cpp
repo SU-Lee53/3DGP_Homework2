@@ -61,11 +61,16 @@ void TankObject::Move(const XMFLOAT3& xmf3Shift)
 	m_xmf4x4World._42 = xmf3CurPosition.y;
 	m_xmf4x4World._43 = xmf3CurPosition.z;
 
-	AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
+	if (GameFramework::m_pCurrentScene->HasFloor()) {
+		AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
+	}
+
 }
 
 void TankObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	ExplosiveObject::Initialize(pd3dDevice, pd3dCommandList);
+
 	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTankMesh, L"../Resources/Tank.obj", XMFLOAT4{1.f, 0.f, 0.f, 1.f});
 	pTankMesh->ComputeMinYPos(XMFLOAT3{ -90.f, 180.f, 0.f });
@@ -87,7 +92,11 @@ void TankObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 	InitializeMovingDirection();
 
 	UpdateBoundingBox();
-	AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
+
+	if (GameFramework::m_pCurrentScene->HasFloor()) {
+		AdjustHeightToFloor(GameFramework::m_pCurrentScene->GetFloorHeight());
+	}
+
 }
 
 void TankObject::Update(float fElapsedTime)
@@ -112,6 +121,24 @@ void TankObject::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, std::
 	ExplosiveObject::Render(pd3dCommandList, pCamera);
 }
 
+XMFLOAT3 TankObject::GetReflectedMovingDirection(const XMFLOAT3& otherPosition)
+{
+	// 일단 반사벡터
+	XMVECTOR xmvNormal = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&m_pTransform->GetPosition()), XMLoadFloat3(&otherPosition)));
+	XMVECTOR xmvReflected = XMVector3Reflect(XMLoadFloat3(&m_xmf3MovingDirection), xmvNormal);
+	
+	// 이동 방향 벡터가 XZ 평면 위에 없으면 탱크가 날아다님
+	// 1. 평면에 Project 시켜서 Normalize 시키던가
+	// 2. y 성분 제거하고 다시 Normalize 시키던가
+	// 1번이 더 정확한 방법일듯?
+
+	xmvReflected = XMVector3Normalize(XMVectorSetY(xmvReflected, 0.f));
+	
+	XMFLOAT3 xmf3Ret;
+	XMStoreFloat3(&xmf3Ret, xmvReflected);
+	return xmf3Ret;
+}
+
 void TankObject::BeginCollision(std::shared_ptr<GameObject> pOther)
 {
 	if (auto p = dynamic_pointer_cast<TankPlayer>(pOther)) {
@@ -119,15 +146,7 @@ void TankObject::BeginCollision(std::shared_ptr<GameObject> pOther)
 			m_bBlowingUp = TRUE;
 		}
 		else {
-			//XMVECTOR xmvNormal = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&m_pTransform->GetPosition()), XMLoadFloat3(&p->GetTransform()->GetPosition())));
-			//XMVECTOR xmvReflected = XMVector3Reflect(XMLoadFloat3(&m_xmf3MovingDirection), xmvNormal);
-			//
-			//XMFLOAT3 xmf3Reflect;
-			//XMStoreFloat3(&xmf3Reflect, xmvReflected);
-
-
-			XMFLOAT3 xmf3Direction = Vector3::ScalarProduct(m_xmf3MovingDirection, -1);
-			SetMovingDirection(xmf3Direction);
+			SetMovingDirection(GetReflectedMovingDirection(p->GetTransform()->GetPosition()));
 		}
 	}
 	else if (auto p = dynamic_pointer_cast<TankObject>(pOther)) {
@@ -154,15 +173,14 @@ void TankObject::BeginCollision(std::shared_ptr<GameObject> pOther)
 	else if (auto p = dynamic_pointer_cast<WallsObject>(pOther)) {
 	}
 	else if (auto p = dynamic_pointer_cast<ObstacleObject>(pOther)) {
-		XMFLOAT3 xmf3Direction = Vector3::ScalarProduct(m_xmf3MovingDirection, -1);
-		SetMovingDirection(xmf3Direction);
+		SetMovingDirection(GetReflectedMovingDirection(pOther->GetTransform()->GetPosition()));
 	}
 }
 
 void TankObject::InCollision(std::shared_ptr<GameObject> pOther)
 {
 	if (auto p = dynamic_pointer_cast<TankPlayer>(pOther)) {
-		m_pTransform->InvalidateMovement();
+		//m_pTransform->InvalidateMovement();
 	}
 }
 

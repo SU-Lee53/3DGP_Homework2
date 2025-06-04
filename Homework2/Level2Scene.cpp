@@ -41,7 +41,6 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 	for (int i = 0; i < 10; ++i) {
 		std::shared_ptr<TankObject> pTank = make_shared<TankObject>();
 		pTank->SetColor(RGB(255, 0, 0));
-		pTank->Initialize(pd3dDevice, pd3dCommandList);
 		pTank->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
 		pTank->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 		m_pObjects.push_back(pTank);
@@ -51,7 +50,6 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 	for (int i = 0; i < 5; ++i) {
 		std::shared_ptr<ObstacleObject> pObstacle = make_shared<ObstacleObject>();
 		pObstacle->SetColor(RGB(255, 0, 0));
-		pObstacle->Initialize(pd3dDevice, pd3dCommandList);
 		pObstacle->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
 		pObstacle->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 		m_pObjects.push_back(pObstacle);
@@ -74,6 +72,12 @@ void Level2Scene::BuildObjects(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Gra
 	m_pWinTextObject->SetMeshDefaultOrientation(XMFLOAT3{ 90.f, 0.f, 0.f });
 	m_pWinTextObject->SetShader(SHADER.GetShader(TAG_SHADER_DIFFUSED));
 	m_pWinTextObject->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+
+	for (auto& pObj : m_pObjects) {
+		pObj->Initialize(pd3dDevice, pd3dCommandList);
+	}
+	m_pWinTextObject->Initialize(pd3dDevice, pd3dCommandList);
 
 	ExplosiveObject::PrepareExplosion(pd3dDevice, pd3dCommandList);
 }

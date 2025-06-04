@@ -9,6 +9,7 @@ std::array<XMFLOAT3, EXPLOSION_DEBRISES> ExplosiveObject::m_xmf3SphereVectors = 
 ExplosiveObject::ExplosiveObject()
 {
 	m_eObjectType = TAG_GAMEOBJECT_TYPE_EXPLOSIVE;
+
 }
 
 ExplosiveObject::~ExplosiveObject()
@@ -17,6 +18,8 @@ ExplosiveObject::~ExplosiveObject()
 
 void ExplosiveObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
+	// 인스턴싱 최대 50개까지
+	m_upStructuredBuffer = std::make_unique<StructuredBuffer<VS_INSTANCING_DATA>>(pd3dDevice, pd3dCommandList, 250);
 }
 
 void ExplosiveObject::Update(float fTimeElapsed)
@@ -80,7 +83,8 @@ void ExplosiveObject::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, 
 			return VS_INSTANCING_DATA{ Matrix4x4::Identity(), xmf4x4Transformdata, xmf4Color };
 		});
 
-		pInstancingShader->UpdateShaderVariables(pd3dCommandList, transformDatas.data(), transformDatas.size());
+		m_upStructuredBuffer->UpdateData(transformDatas);
+		m_upStructuredBuffer->SetBufferToPipeline(pd3dCommandList, 1);
 
 		m_pExplosionMesh->Render(pd3dCommandList, EXPLOSION_DEBRISES);
 	}

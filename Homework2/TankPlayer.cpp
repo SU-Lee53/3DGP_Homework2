@@ -38,7 +38,9 @@ void TankPlayer::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 	shared_ptr<Mesh<DiffusedVertex>> pBulletMesh = make_shared<Mesh<DiffusedVertex>>();
-	MeshHelper::CreateCubeMesh(pd3dDevice, pd3dCommandList, pBulletMesh, 0.5f, 0.5f, 1.f);
+	XMFLOAT4 xmf4BulletColor;
+	XMStoreFloat4(&xmf4BulletColor, DirectX::Colors::Orange);
+	MeshHelper::CreateCubeMesh(pd3dDevice, pd3dCommandList, pBulletMesh, 0.5f, 0.5f, 1.f, xmf4BulletColor);
 	std::generate_n(m_pBullets.begin(), BULLET_COUNT, [this, &pBulletMesh, &pd3dDevice, &pd3dCommandList]()->std::shared_ptr<BulletObject> {
 		shared_ptr<BulletObject> pBullet = make_shared<BulletObject>(m_fBulletEffectiveRange);
 		pBullet->SetMesh(pBulletMesh);

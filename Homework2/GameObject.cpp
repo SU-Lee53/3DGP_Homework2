@@ -14,15 +14,6 @@ void GameObject::SetMesh(const std::shared_ptr<Mesh_Base>& pMesh)
 	m_pMesh = pMesh;
 	m_xmOBB = m_pMesh->GetOBB();
 
-#ifdef _DEBUG_COLLISION
-	m_pMeshOBBMesh = std::make_shared<Mesh<DiffusedVertex>>();
-	XMFLOAT3 xmf3OBBExtents = pMesh->GetOBB().Extents;
-	MeshHelper::CreateCubeMesh(m_pMeshOBBMesh, xmf3OBBExtents.x * 2, xmf3OBBExtents.y * 2, xmf3OBBExtents.z * 2);
-	
-	m_pObjectOBBMesh = std::make_shared<Mesh<DiffusedVertex>>();
-	xmf3OBBExtents = m_xmOBB.Extents;
-	MeshHelper::CreateCubeMesh(m_pObjectOBBMesh, xmf3OBBExtents.x * 2, xmf3OBBExtents.y * 2, xmf3OBBExtents.z * 2);
-#endif
 }
 
 XMFLOAT4X4 GameObject::GetModelTransform()
@@ -110,7 +101,13 @@ void GameObject::RenderObject(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList,
 
 void GameObject::GenerateRayForPicking(XMVECTOR& xmvPickPosition, const XMMATRIX& xmmtxView, XMVECTOR& xmvPickRayOrigin, XMVECTOR& xmvPickRayDirection) const
 {
-	XMMATRIX xmmtxToModel = XMMatrixInverse(NULL, XMLoadFloat4x4(&m_pTransform->GetWorldMatrix()) * xmmtxView);
+	XMMATRIX xmmtxAdditionalRotation = XMMatrixRotationRollPitchYaw(
+		XMConvertToRadians(m_xmf3DefaultOrientation.x),
+		XMConvertToRadians(m_xmf3DefaultOrientation.y),
+		XMConvertToRadians(m_xmf3DefaultOrientation.z)
+	);
+
+	XMMATRIX xmmtxToModel = XMMatrixInverse(NULL, XMMatrixMultiply(XMMatrixMultiply(xmmtxAdditionalRotation, XMLoadFloat4x4(&m_pTransform->GetWorldMatrix())), xmmtxView));
 
 	XMFLOAT3 xmf3CameraOrigin{ 0.f, 0.f,0.f };
 	xmvPickRayOrigin = XMVector3TransformCoord(XMLoadFloat3(&xmf3CameraOrigin), xmmtxToModel);

@@ -104,13 +104,5 @@ protected:
 	// Shader Variables
 	std::unique_ptr<ConstantBuffer<VS_TRANSFORM_DATA>> m_upcbTransfromBuffer;
 
-//#define _DEBUG_COLLISION
-
-#ifdef _DEBUG_COLLISION
-	std::shared_ptr<class Mesh> m_pObjectOBBMesh;
-	std::shared_ptr<class Mesh> m_pMeshOBBMesh;
-#endif
-
-
 };
 

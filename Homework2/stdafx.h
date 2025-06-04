@@ -92,10 +92,12 @@ extern ComPtr<ID3D12Resource> CreateBufferResources(ComPtr<ID3D12Device> pd3dDev
 	D3D12_RESOURCE_STATES d3dResourceStates = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, ID3D12Resource** ppd3dUploadBuffer = nullptr);
 
 extern void ShowErrorMessage(std::string_view file, int line, std::string_view message);
+#define SHOW_ERROR(strMsg)		ShowErrorMessage(__FILE__, __LINE__, strMsg);
 
 extern XMFLOAT4 ConvertWinColorToD3DColor(COLORREF color, float alpha = 1.0f);
 
-#define SHOW_ERROR(strMsg)		ShowErrorMessage(__FILE__, __LINE__, strMsg);
+#define CB_SIZE(nBytesOfData)	((nBytesOfData + 255) & ~255)
+
 
 
 inline bool IsZero(float fValue) { return fabsf(fValue) < std::numeric_limits<float>::epsilon(); }

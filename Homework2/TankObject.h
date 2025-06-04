@@ -26,6 +26,9 @@ public:
 	virtual void InCollision(std::shared_ptr<GameObject> pOther) override;
 
 private:
+	XMFLOAT3 GetReflectedMovingDirection(const XMFLOAT3& otherPosition);
+
+private:
 	void InitializeMovingDirection();
 
 	void Move(const XMFLOAT3& xmf3Shift);
