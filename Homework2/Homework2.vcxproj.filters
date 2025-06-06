@@ -165,9 +165,6 @@
     <ClInclude Include="Shader.h">
       <Filter>소스 파일\Shader</Filter>
     </ClInclude>
-    <ClInclude Include="RenderManager.h">
-      <Filter>소스 파일\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="VertexType.h">
       <Filter>소스 파일\Mesh</Filter>
     </ClInclude>
@@ -263,9 +260,6 @@
     <ClCompile Include="Shader.cpp">
       <Filter>소스 파일\Shader</Filter>
     </ClCompile>
-    <ClCompile Include="RenderManager.cpp">
-      <Filter>소스 파일\Managers</Filter>
-    </ClCompile>
     <ClCompile Include="VertexType.cpp">
       <Filter>소스 파일\Mesh</Filter>
     </ClCompile>
@@ -293,10 +287,10 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="DiffusedShader.hlsl">
+    <FxCompile Include="..\Shaders\DiffusedShader.hlsl">
       <Filter>소스 파일\Shader\HLSL</Filter>
     </FxCompile>
-    <FxCompile Include="InstancingShader.hlsl">
+    <FxCompile Include="..\Shaders\InstancingShader.hlsl">
       <Filter>소스 파일\Shader\HLSL</Filter>
     </FxCompile>
   </ItemGroup>

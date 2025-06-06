@@ -36,14 +36,6 @@ void Scene::UpdatePipelineVaribles(std::shared_ptr<class Camera> pCamera)
 
 void Scene::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	/*
-		for (const auto pObj : m_pObjects) {
-			RENDER.Add(pObj);
-		}
-
-		RENDER.Add(m_pPlayer);
-	*/
-
 	for (const auto pObj : m_pObjects) {
 		pObj->Render(pd3dCommandList, m_pPlayer->GetCamera());
 	}

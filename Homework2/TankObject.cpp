@@ -73,7 +73,6 @@ void TankObject::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 
 	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTankMesh, L"../Resources/Tank.obj", XMFLOAT4{1.f, 0.f, 0.f, 1.f});
-	pTankMesh->ComputeMinYPos(XMFLOAT3{ -90.f, 180.f, 0.f });
 	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
 	SetMesh(pTankMesh);
 	SetColor(RGB(255, 0, 0));
@@ -127,11 +126,7 @@ XMFLOAT3 TankObject::GetReflectedMovingDirection(const XMFLOAT3& otherPosition)
 	XMVECTOR xmvNormal = XMVector3Normalize(XMVectorSubtract(XMLoadFloat3(&m_pTransform->GetPosition()), XMLoadFloat3(&otherPosition)));
 	XMVECTOR xmvReflected = XMVector3Reflect(XMLoadFloat3(&m_xmf3MovingDirection), xmvNormal);
 	
-	// 이동 방향 벡터가 XZ 평면 위에 없으면 탱크가 날아다님
-	// 1. 평면에 Project 시켜서 Normalize 시키던가
-	// 2. y 성분 제거하고 다시 Normalize 시키던가
-	// 1번이 더 정확한 방법일듯?
-
+	// 탱크가 날아다니지 않도록 이동 방향 벡터의 Y 성분을 0으로 맞춤
 	xmvReflected = XMVector3Normalize(XMVectorSetY(xmvReflected, 0.f));
 	
 	XMFLOAT3 xmf3Ret;

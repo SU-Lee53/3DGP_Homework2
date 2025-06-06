@@ -9,13 +9,6 @@ enum TAG_SHADER_TYPE : UINT8 {
 	TAG_SHADER_COUNT
 };
 
-struct SHADER_LOAD_INFO {
-	std::wstring wstrShaderFile = L"";
-	std::string strShaderName = "";
-	std::string strShaderProfile = "";
-};
-
-
 class ShaderManager {
 	DECLARE_SINGLE(ShaderManager)
 public:

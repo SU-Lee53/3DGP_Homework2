@@ -132,42 +132,29 @@ BOOL GameObject::PickObjectByRayIntersection(XMVECTOR& xmvPickPosition, const XM
 
 void GameObject::AdjustHeightToFloor(float fFloorHeight)
 {
+	/*
+	*	- OBB 를 이용하여 바닥에 붙임
+	*/
+
 	XMFLOAT3 xmf3CurrentPos = m_pTransform->GetPosition();
 
-	if (std::shared_ptr<Mesh<DiffusedVertex>> pMesh = dynamic_pointer_cast<Mesh<DiffusedVertex>>(m_pMesh)) {
+	XMVECTOR xmvOBBExtent = XMLoadFloat3(&m_xmOBB.Extents);
+	XMVECTOR xmvOBBOrientationQuat = XMLoadFloat4(&m_xmOBB.Orientation);
 
-		/*
-		*	- OBB 를 이용하여 바닥에 붙임
-		*
-		*/
+	// 일단 회전만 시켜서 높이 구함
+	XMVECTOR xmvRotatedExtent = XMVector3Rotate(xmvOBBExtent, xmvOBBOrientationQuat);
+	float fHeight = fFloorHeight + XMVectorGetY(xmvRotatedExtent);
 
-		XMVECTOR xmvOBBCenter = XMLoadFloat3(&m_xmOBB.Center);
-		XMVECTOR xmvOBBExtent = XMLoadFloat3(&m_xmOBB.Extents);
-		XMVECTOR xmvOBBOrientationQuat = XMLoadFloat4(&m_xmOBB.Orientation);
-
-		XMMATRIX xmmtxTranslation = XMMatrixTranslationFromVector(xmvOBBCenter);
-		XMMATRIX xmmtxRotation = XMMatrixRotationQuaternion(xmvOBBOrientationQuat);
-
-		// 일단 회전만 시켜서 높이 구함
-		XMVECTOR xmvRotatedExtent = XMVector3Rotate(xmvOBBExtent, xmvOBBOrientationQuat);
-		float fHeight = fFloorHeight + XMVectorGetY(xmvRotatedExtent);
-
-		// 현위치에서 바닥
-		if (xmf3CurrentPos.y < fHeight) {
-			xmf3CurrentPos.y = fHeight;
-			m_pTransform->SetPosition(xmf3CurrentPos);
-		}
-
+	// 현위치에서 바닥
+	if (xmf3CurrentPos.y < fHeight) {
+		xmf3CurrentPos.y = fHeight;
+		m_pTransform->SetPosition(xmf3CurrentPos);
 	}
-	else {
-		__debugbreak();
-	}
-	
 }
 
 void GameObject::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
-	m_upcbTransfromBuffer = std::make_unique<ConstantBuffer<VS_TRANSFORM_DATA>>(pd3dDevice, pd3dCommandList);
+	m_upcbTransfromData = std::make_unique<ConstantBuffer<CB_TRANSFORM_DATA>>(pd3dDevice, pd3dCommandList);
 }
 
 void GameObject::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
@@ -180,9 +167,9 @@ void GameObject::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCom
 	XMStoreFloat4x4(&xmf4x4Model, XMLoadFloat4x4(&xmf4x4Model));
 	xmf4x4Model = Matrix4x4::Transpose(xmf4x4Model);
 
-	VS_TRANSFORM_DATA data{ xmf4x4Model, xmf4x4Transform };
+	CB_TRANSFORM_DATA data{ xmf4x4Model, xmf4x4Transform };
 
-	m_upcbTransfromBuffer->UpdateData(data);
+	m_upcbTransfromData->UpdateData(data);
 
-	m_upcbTransfromBuffer->SetBufferToPipeline(pd3dCommandList, 1);
+	m_upcbTransfromData->SetBufferToPipeline(pd3dCommandList, 1);
 }

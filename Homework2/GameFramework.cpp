@@ -31,7 +31,6 @@ void GameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd, bool bEnableDeb
 	CreateDepthStencilView();
 
 	INPUT.OnCreate(m_hWnd);
-	RENDER.OnCreate();
 	SHADER.OnCreate(m_pd3dDevice, m_pd3dCommandList);
 
 	BuildObjects();
@@ -41,6 +40,12 @@ void GameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd, bool bEnableDeb
 
 void GameFramework::OnDestroy()
 {
+	BOOL bFullScreenState = FALSE;
+	m_pdxgiSwapChain->GetFullscreenState(&bFullScreenState, NULL);
+	if (bFullScreenState) {
+		ChangeSwapChainState();
+	}
+
 	WaitForGPUComplete();
 }
 
@@ -125,8 +130,6 @@ void GameFramework::ReleaseObjects()
 BOOL GameFramework::ChangeScene(TAG_SCENE_NAME eTargetSceneTag)
 {
 	WaitForGPUComplete();
-
-
 
 	if (!INPUT.IsCursorShown()) {
 		INPUT.ShowCursor();
@@ -303,7 +306,7 @@ void GameFramework::CreateSwapChain()
 		dxgiSwapChainDesc.SampleDesc.Quality = (m_bMsaa4xEnable) ? (m_nMsaa4xQualityLevels - 1) : 0;
 		dxgiSwapChainDesc.Windowed = TRUE;
 
-		/// Set backbuffer resolution as fullscreen resolution.
+		// Set backbuffer resolution as fullscreen resolution.
 		dxgiSwapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	}
 
@@ -403,12 +406,12 @@ void GameFramework::CreateRenderTargetViews()
 	D3D12_CPU_DESCRIPTOR_HANDLE d3dRTVCPUDescriptorHandle = m_pd3dRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	for (UINT i = 0; i < m_nSwapChainBuffers; ++i)
 	{
-		hr = m_pdxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(m_ppd3dRenderTargetBuffers[i].GetAddressOf()));
+		hr = m_pdxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(m_pd3dRenderTargetBuffers[i].GetAddressOf()));
 		if (FAILED(hr)) {
 			SHOW_ERROR("Failed to get buffer from SwapChain");
 		}
 
-		m_pd3dDevice->CreateRenderTargetView(m_ppd3dRenderTargetBuffers[i].Get(), NULL, d3dRTVCPUDescriptorHandle);
+		m_pd3dDevice->CreateRenderTargetView(m_pd3dRenderTargetBuffers[i].Get(), NULL, d3dRTVCPUDescriptorHandle);
 		d3dRTVCPUDescriptorHandle.ptr += m_nRTVDescriptorIncrementSize;
 	}
 }
@@ -486,13 +489,14 @@ void GameFramework::ChangeSwapChainState()
 	m_pdxgiSwapChain->ResizeTarget(&dxgiTargetParameters);
 
 	for (int i = 0; i < m_nSwapChainBuffers; ++i) {
-		if (m_ppd3dRenderTargetBuffers[i])
-			m_ppd3dRenderTargetBuffers[i]->Release();
+		if (m_pd3dRenderTargetBuffers[i])
+			m_pd3dRenderTargetBuffers[i].Reset();
 	}
 
 	DXGI_SWAP_CHAIN_DESC dxgiSwapChainDesc;
 	m_pdxgiSwapChain->GetDesc(&dxgiSwapChainDesc);
-	m_pdxgiSwapChain->ResizeBuffers(m_nSwapChainBuffers, m_nWndClientWidth, m_nWndClientHeight, dxgiSwapChainDesc.BufferDesc.Format, dxgiSwapChainDesc.Flags);
+	m_pdxgiSwapChain->ResizeBuffers(m_nSwapChainBuffers, m_nWndClientWidth, m_nWndClientHeight, 
+		dxgiSwapChainDesc.BufferDesc.Format, dxgiSwapChainDesc.Flags);
 
 	m_nSwapChainBufferIndex = m_pdxgiSwapChain->GetCurrentBackBufferIndex();
 
@@ -535,7 +539,7 @@ void GameFramework::RenderBegin()
 	{
 		d3dResourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		d3dResourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		d3dResourceBarrier.Transition.pResource = m_ppd3dRenderTargetBuffers[m_nSwapChainBufferIndex].Get();
+		d3dResourceBarrier.Transition.pResource = m_pd3dRenderTargetBuffers[m_nSwapChainBufferIndex].Get();
 		d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 		d3dResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		d3dResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -565,7 +569,7 @@ void GameFramework::RenderEnd()
 	{
 		d3dResourceBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		d3dResourceBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		d3dResourceBarrier.Transition.pResource = m_ppd3dRenderTargetBuffers[m_nSwapChainBufferIndex].Get();
+		d3dResourceBarrier.Transition.pResource = m_pd3dRenderTargetBuffers[m_nSwapChainBufferIndex].Get();
 		d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		d3dResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 		d3dResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -589,12 +593,11 @@ void GameFramework::Present()
 	dxgiPresentParameters.pScrollOffset = NULL;
 
 	m_pdxgiSwapChain->Present1(1, 0, &dxgiPresentParameters);
-
 }
 
 void GameFramework::WaitForGPUComplete()
 {
-	const UINT64 nFenceValue = ++m_nFenceValues[m_nSwapChainBufferIndex];
+	UINT64 nFenceValue = ++m_nFenceValues[m_nSwapChainBufferIndex];
 	HRESULT hResult = m_pd3dCommandQueue->Signal(m_pd3dFence.Get(), nFenceValue);
 	if (m_pd3dFence->GetCompletedValue() < nFenceValue)
 	{

@@ -1,12 +1,12 @@
 
 
-struct VS_BASIC_INPUT
+struct VS_DIFFUSED_INPUT
 {
     float3 pos : POSITION;
     float4 color : COLOR;
 };
 
-struct VS_BASIC_OUTPUT
+struct VS_DIFFUSED_OUTPUT
 {
     float4 pos : SV_POSITION;
     float4 color : COLOR;
@@ -26,9 +26,9 @@ struct InstancingData
 
 StructuredBuffer<InstancingData> gInstancingDatas : register(t0);
 
-VS_BASIC_OUTPUT VSInstancing(VS_BASIC_INPUT input, uint nInstanceID : SV_InstanceID)
+VS_DIFFUSED_OUTPUT VSInstancing(VS_DIFFUSED_INPUT input, uint nInstanceID : SV_InstanceID)
 {
-    VS_BASIC_OUTPUT output;
+    VS_DIFFUSED_OUTPUT output;
     
     output.pos = mul(mul(mul(float4(input.pos, 1), gInstancingDatas[nInstanceID].gmtxModel), gInstancingDatas[nInstanceID].gmtxWorld), gmtxViewProjection);
     output.color = gInstancingDatas[nInstanceID].color;
@@ -36,7 +36,7 @@ VS_BASIC_OUTPUT VSInstancing(VS_BASIC_INPUT input, uint nInstanceID : SV_Instanc
     return output;
 }
 
-float4 PSInstancing(VS_BASIC_OUTPUT input) : SV_TARGET
+float4 PSInstancing(VS_DIFFUSED_OUTPUT input) : SV_TARGET
 {
     return input.color;
 }

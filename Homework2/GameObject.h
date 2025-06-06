@@ -4,7 +4,7 @@
 
 class Shader;
 
-struct VS_TRANSFORM_DATA {
+struct CB_TRANSFORM_DATA {
 	XMFLOAT4X4 xmf4x4Model;
 	XMFLOAT4X4 xmf4x4World;
 };
@@ -102,7 +102,7 @@ protected:
 	std::unordered_set<std::shared_ptr<GameObject>> m_pCollisionSet = {};
 
 	// Shader Variables
-	std::unique_ptr<ConstantBuffer<VS_TRANSFORM_DATA>> m_upcbTransfromBuffer;
+	std::unique_ptr<ConstantBuffer<CB_TRANSFORM_DATA>> m_upcbTransfromData;
 
 };
 

@@ -9,6 +9,6 @@ void ShaderManager::OnCreate(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graph
 	m_pShaders[TAG_SHADER_WIREFRAME] = std::make_shared<WireframeShader>();
 	m_pShaders[TAG_SHADER_WIREFRAME]->CreateShader(pd3dDevice, pd3dCommandList);
 
-	m_pShaders[TAG_SHADER_INSTANCED] = std::make_shared<InstancedShader>();
+	m_pShaders[TAG_SHADER_INSTANCED] = std::make_shared<InstancingShader>();
 	m_pShaders[TAG_SHADER_INSTANCED]->CreateShader(pd3dDevice, pd3dCommandList);
 }

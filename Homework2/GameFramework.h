@@ -78,7 +78,7 @@ private:
 private:
 	// Framework resources
 	// RTV
-	std::array<ComPtr<ID3D12Resource>, m_nSwapChainBuffers> m_ppd3dRenderTargetBuffers = {};
+	std::array<ComPtr<ID3D12Resource>, m_nSwapChainBuffers> m_pd3dRenderTargetBuffers = {};
 	ComPtr<ID3D12DescriptorHeap>	m_pd3dRTVDescriptorHeap = nullptr;
 	UINT							m_nRTVDescriptorIncrementSize = 0;
 
@@ -104,9 +104,7 @@ private:
 
 private:
 	GameTimer	m_GameTimer = {};
-
 	POINT		m_ptOldCursorPos = {};
-
 	_TCHAR		m_pszFrameRate[50] = {};
 
 public:
@@ -119,7 +117,7 @@ private:
 	BOOL ChangeScene(TAG_SCENE_NAME eTargetSceneTag);
 
 	// Manages Scenes
-	std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> m_pScenes;
+	std::array<std::shared_ptr<Scene>, TAG_SCENE_COUNT> m_pScenes = {};
 	static TAG_SCENE_NAME m_eCurrentSceneTag;
 	static TAG_SCENE_NAME m_eNextSceneTag;
 

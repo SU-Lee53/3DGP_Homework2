@@ -168,8 +168,8 @@ D3D12_DEPTH_STENCIL_DESC DiffusedShader::CreateDepthStencilState()
 void DiffusedShader::CreateVertexShader()
 {
 	return CompileShaderFromFile(
-		L"DiffusedShader.hlsl",
-		"VSBasic",
+		L"../Shaders/DiffusedShader.hlsl",
+		"VSDiffused",
 		"vs_5_1"
 	);
 }
@@ -177,8 +177,8 @@ void DiffusedShader::CreateVertexShader()
 void DiffusedShader::CreatePixelShader()
 {
 	return CompileShaderFromFile(
-		L"DiffusedShader.hlsl",
-		"PSBasic",
+		L"../Shaders/DiffusedShader.hlsl",
+		"PSDiffused",
 		"ps_5_1"
 	);
 }
@@ -290,51 +290,51 @@ D3D12_RASTERIZER_DESC WireframeShader::CreateRasterizerState()
 }
 
 /////////////////////
-// InstancedShader // 
+// InstancingShader // 
 /////////////////////
 
-InstancedShader::InstancedShader()
+InstancingShader::InstancingShader()
 {
 }
 
-InstancedShader::~InstancedShader()
+InstancingShader::~InstancingShader()
 {
 }
 
-D3D12_RASTERIZER_DESC InstancedShader::CreateRasterizerState()
+D3D12_RASTERIZER_DESC InstancingShader::CreateRasterizerState()
 {
 	return Shader::CreateRasterizerState();
 }
 
-D3D12_BLEND_DESC InstancedShader::CreateBlendState()
+D3D12_BLEND_DESC InstancingShader::CreateBlendState()
 {
 	return Shader::CreateBlendState();
 }
 
-D3D12_DEPTH_STENCIL_DESC InstancedShader::CreateDepthStencilState()
+D3D12_DEPTH_STENCIL_DESC InstancingShader::CreateDepthStencilState()
 {
 	return Shader::CreateDepthStencilState();
 }
 
-void InstancedShader::CreateVertexShader()
+void InstancingShader::CreateVertexShader()
 {
 	return CompileShaderFromFile(
-		L"InstancingShader.hlsl",
+		L"../Shaders/InstancingShader.hlsl",
 		"VSInstancing",
 		"vs_5_1"
 	);
 }
 
-void InstancedShader::CreatePixelShader()
+void InstancingShader::CreatePixelShader()
 {
 	return CompileShaderFromFile(
-		L"InstancingShader.hlsl",
+		L"../Shaders/InstancingShader.hlsl",
 		"PSInstancing",
 		"ps_5_1"
 	);
 }
 
-void InstancedShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+void InstancingShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 	CreateVertexShader();
 	CreatePixelShader();
@@ -342,7 +342,7 @@ void InstancedShader::CreateShader(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D1
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
-void InstancedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice) 
+void InstancingShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice) 
 {
 	D3D12_ROOT_PARAMETER pd3dRootParameters[2];
 
@@ -390,18 +390,18 @@ void InstancedShader::CreateRootSignature(ComPtr<ID3D12Device> pd3dDevice)
 
 }
 
-void InstancedShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+void InstancingShader::CreateShaderVariables(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 }
 
-void InstancedShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas)
+void InstancingShader::UpdateShaderVariables(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, void* pData, UINT nDatas)
 {
 }
 
-void InstancedShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
+void InstancingShader::OnPrepareRender(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList)
 {
 }
 
-void InstancedShader::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera)
+void InstancingShader::Render(ComPtr<ID3D12GraphicsCommandList> pd3dCommandList, Camera* pCamera)
 {
 }

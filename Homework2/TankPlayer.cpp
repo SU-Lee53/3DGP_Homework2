@@ -30,7 +30,6 @@ void TankPlayer::Initialize(ComPtr<ID3D12Device> pd3dDevice, ComPtr<ID3D12Graphi
 
 	shared_ptr<Mesh<DiffusedVertex>> pTankMesh = make_shared<Mesh<DiffusedVertex>>();
 	MeshHelper::CreateMeshFromOBJFiles(pd3dDevice, pd3dCommandList, pTankMesh, L"../Resources/Tank.obj", XMFLOAT4{0.f, 1.f, 0.f, 1.f});
-	pTankMesh->ComputeMinYPos(XMFLOAT3{ -90.f, 180.f, 0.f });
 	SetMeshDefaultOrientation(XMFLOAT3{ -90.f, 180.f, 0.f });
 	SetMesh(pTankMesh);
 	SetColor(RGB(255, 0, 0));

@@ -70,7 +70,6 @@ ComPtr<ID3D12Resource> _stdcall CreateBufferResources(ComPtr<ID3D12Device> pd3dD
 				);
 
 				if (FAILED(hr)) {
-					__debugbreak();
 					return nullptr;
 				}
 

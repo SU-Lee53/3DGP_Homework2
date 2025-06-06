@@ -93,10 +93,10 @@ struct VS_INSTANCING_DATA {
 	XMFLOAT4 color;
 };
 
-class InstancedShader : public Shader {
+class InstancingShader : public Shader {
 public:
-	InstancedShader();
-	virtual ~InstancedShader();
+	InstancingShader();
+	virtual ~InstancingShader();
 
 public:
 	virtual D3D12_RASTERIZER_DESC CreateRasterizerState();

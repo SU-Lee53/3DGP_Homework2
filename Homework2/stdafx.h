@@ -124,7 +124,6 @@ inline bool IsEqual(float fA, float fB) { return (::IsZero(fA - fB)); }
 
 // Managers
 #include "InputManager.h"
-#include "RenderManager.h"
 #include "ShaderManager.h"
 
 #undef min

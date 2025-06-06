@@ -18,7 +18,7 @@ class Player;
 class Transform;
 
 struct CB_CAMERA_DATA {
-	XMFLOAT4X4 xmf4ViewProjection = {};
+	XMFLOAT4X4 xmf4ViewProjection;
 };
 
 
